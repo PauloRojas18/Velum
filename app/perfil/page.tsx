@@ -3,18 +3,39 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import TitleCard from '@/components/TitleCard'
 import EpisodeCard from '@/components/EpisodeCard'
+
+interface User {
+  id: number
+  name: string
+  email: string
+  avatar_color: string | null
+  is_admin: boolean
+}
+
+interface EpisodeData {
+  id: number
+  season: number
+  episode: number
+  name: string
+  duration: string | null
+  thumbnail_url: string | null
+}
+
+interface WatchProgress {
+  id: number
+  episodes: EpisodeData
+}
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [history, setHistory] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [history, setHistory] = useState<WatchProgress[]>([])
 
   useEffect(() => {
     const stored = localStorage.getItem('user')
     if (!stored) { router.push('/login'); return }
-    const u = JSON.parse(stored)
+    const u = JSON.parse(stored) as User
     setUser(u)
     loadHistory(u.id)
   }, [])
@@ -27,7 +48,7 @@ export default function ProfilePage() {
       .eq('watched', true)
       .order('updated_at', { ascending: false })
       .limit(10)
-    setHistory(data || [])
+    setHistory((data ?? []) as WatchProgress[])
   }
 
   function handleLogout() {
@@ -37,12 +58,14 @@ export default function ProfilePage() {
 
   if (!user) return null
 
+  const avatarColor = user.avatar_color ?? '#555'
+
   return (
     <main className="min-h-screen bg-[#080808] text-white px-8 py-10">
       <div className="flex items-center gap-5 mb-12">
         <div
           className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-[family-name:var(--font-serif)] italic"
-          style={{ background: user.avatar_color + '22', border: `1px solid ${user.avatar_color}` }}
+          style={{ background: avatarColor + '22', border: `1px solid ${avatarColor}` }}
         >
           {user.name[0]}
         </div>
@@ -52,7 +75,7 @@ export default function ProfilePage() {
           </h1>
           <p className="text-white/30 text-xs mt-1">{user.email}</p>
           {user.is_admin && (
-            <span className="text-[9px] tracking-[2px] uppercase text-[#c9a84c] border border-[#c9a84c]/30 px-2 py-0.5 mt-1 inline-block">
+            <span className="text-[9px] tracking-[2px] uppercase text-[#aaa] border border-white/20 px-2 py-0.5 mt-1 inline-block">
               Admin
             </span>
           )}
@@ -66,7 +89,7 @@ export default function ProfilePage() {
       </div>
 
       <div>
-        <p className="text-[9px] tracking-[4px] text-[#c9a84c] uppercase mb-6">
+        <p className="text-[9px] tracking-[4px] text-[#888] uppercase mb-6">
           Histórico
         </p>
         {history.length === 0 ? (

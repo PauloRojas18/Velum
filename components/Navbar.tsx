@@ -2,16 +2,22 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
+
+interface User {
+  name: string
+  email: string
+  avatar_color: string | null
+  is_admin: boolean
+}
 
 export default function Navbar() {
   const pathname = usePathname()
-  const router = useRouter()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem('user')
-    if (stored) setUser(JSON.parse(stored))
+    if (stored) setUser(JSON.parse(stored) as User)
   }, [])
 
   if (pathname === '/login') return null
@@ -23,13 +29,13 @@ export default function Navbar() {
           href="/"
           className="font-[family-name:var(--font-sans)] font-black text-base tracking-widest text-white uppercase"
         >
-          Arquivo
+          Velum
         </Link>
         <div className="flex items-center gap-6">
           {[
             { href: '/', label: 'Início' },
-            { href: '/browse', label: 'Catálogo' },
-            { href: '/search', label: 'Buscar' },
+            { href: '/catalogo', label: 'Catálogo' },
+            { href: '/pesquisar', label: 'Buscar' },
           ].map(({ href, label }) => (
             <Link
               key={href}
@@ -48,21 +54,21 @@ export default function Navbar() {
         {user?.is_admin && (
           <Link
             href="/admin"
-            className="font-[family-name:var(--font-mono)] text-[10px] tracking-[3px] uppercase text-[#ae00ff]/60 hover:text-[#ae00ff] transition-colors"
+            className="font-[family-name:var(--font-mono)] text-[10px] tracking-[3px] uppercase text-[#888]/60 hover:text-[#aaa] transition-colors"
           >
             Admin
           </Link>
         )}
-        <Link href="/profile">
+        <Link href="/perfil">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black cursor-pointer hover:scale-110 transition-transform uppercase"
             style={{
-              background: (user?.avatar_color || '#ae00ff') + '22',
-              border: `1px solid ${user?.avatar_color || '#ae00ff'}`,
-              color: user?.avatar_color || '#ae00ff',
+              background: (user?.avatar_color ?? '#555') + '22',
+              border: `1px solid ${user?.avatar_color ?? '#555'}`,
+              color: user?.avatar_color ?? '#888',
             }}
           >
-            {user?.name?.[0] || 'U'}
+            {user?.name?.[0] ?? 'U'}
           </div>
         </Link>
       </div>

@@ -19,7 +19,7 @@ export default function Hero({ titles }: { titles: Title[] }) {
       <div className="h-[500px] flex items-end px-8 pb-10">
         <div>
           <h1 className="font-[family-name:var(--font-serif)] text-5xl italic text-white/20">
-            Arquivo
+            Velum
           </h1>
           <p className="text-white/20 text-sm mt-2">
             Nenhum título cadastrado ainda.
@@ -42,7 +42,7 @@ export default function Hero({ titles }: { titles: Title[] }) {
       <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-transparent to-transparent" />
 
       <div className="relative z-10 max-w-lg">
-        <p className="text-[9px] tracking-[4px] text-[#c9a84c] uppercase mb-3">
+        <p className="text-[9px] tracking-[4px] text-[#888] uppercase mb-3">
           {featured.type === 'series'
             ? `Série · ${featured.total_seasons} temporadas`
             : `Filme · ${featured.year}`}
@@ -57,13 +57,13 @@ export default function Hero({ titles }: { titles: Title[] }) {
         )}
         <div className="flex gap-3">
           <Link
-            href={`/title/${featured.id}`}
-            className="bg-[#c9a84c] text-black text-xs tracking-[3px] uppercase px-6 py-3 hover:opacity-80 transition-opacity"
+            href={`/titulo/${featured.id}`}
+            className="bg-white text-black text-xs tracking-[3px] uppercase px-6 py-3 hover:bg-white/80 transition-opacity"
           >
             Ver detalhes
           </Link>
           <Link
-            href="/browse"
+            href="/catalogo"
             className="border border-white/20 text-white text-xs tracking-[3px] uppercase px-6 py-3 hover:border-white/50 transition-colors"
           >
             Catálogo

@@ -21,11 +21,11 @@ export default function TitleRow({
   return (
     <div className="px-8 mb-10">
       <div className="flex items-center justify-between mb-5">
-        <p className="text-[9px] tracking-[4px] text-[#c9a84c] uppercase">
+        <p className="text-[9px] tracking-[4px] text-[#888] uppercase">
           {label}
         </p>
         <Link
-          href="/browse"
+          href="/catalogo"
           className="text-[9px] tracking-[2px] uppercase text-white/20 hover:text-white/50 transition-colors"
         >
           Ver tudo

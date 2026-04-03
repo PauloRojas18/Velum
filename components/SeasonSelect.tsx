@@ -21,19 +21,19 @@ export default function SeasonSelect({
   seasons: number[]
   episodes: Episode[]
 }) {
-  const [active, setActive] = useState(seasons[0] || 1)
+  const [active, setActive] = useState(seasons[0] ?? 1)
   const filtered = episodes.filter(e => e.season === active)
 
   return (
     <div>
       <div className="flex items-center gap-4 mb-8">
-        <p className="text-[9px] tracking-[4px] text-[#c9a84c] uppercase">
+        <p className="text-[9px] tracking-[4px] text-[#888] uppercase">
           Temporada
         </p>
         <select
           value={active}
           onChange={e => setActive(Number(e.target.value))}
-          className="bg-white/5 border border-white/10 text-white text-xs px-3 py-2 outline-none focus:border-[#c9a84c] transition-colors"
+          className="bg-white/5 border border-white/10 text-white text-xs px-3 py-2 outline-none focus:border-white/30 transition-colors"
         >
           {seasons.map(s => (
             <option key={s} value={s} className="bg-[#111]">

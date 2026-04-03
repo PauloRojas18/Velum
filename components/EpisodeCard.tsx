@@ -11,7 +11,7 @@ type Episode = {
 
 export default function EpisodeCard({ episode }: { episode: Episode }) {
   return (
-    <Link href={`/episode/${episode.id}`} className="group block flex-none w-[160px]">
+    <Link href={`/episodio/${episode.id}`} className="group block flex-none w-[160px]">
       <div className="w-full h-[90px] bg-[#111] border border-white/5 overflow-hidden relative">
         {episode.thumbnail_url ? (
           <img
@@ -31,7 +31,7 @@ export default function EpisodeCard({ episode }: { episode: Episode }) {
         </div>
       </div>
       <div className="mt-2">
-        <p className="text-[9px] tracking-[3px] text-[#c9a84c] uppercase">
+        <p className="text-[9px] tracking-[3px] text-[#888] uppercase">
           Ep {episode.episode}
         </p>
         <p className="text-xs text-white/70 mt-1 truncate">{episode.name}</p>

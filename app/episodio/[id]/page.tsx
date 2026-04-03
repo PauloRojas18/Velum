@@ -4,16 +4,40 @@ import DrivePlayer from '@/components/DrivePlayer'
 import EpisodeCard from '@/components/EpisodeCard'
 import Link from 'next/link'
 
+type Episode = {
+  id: number
+  season: number
+  episode: number
+  name: string
+  duration: string | null
+  thumbnail_url: string | null
+  file_id: string
+  storage: string
+  title_id: number
+  titles: { name: string } | null
+}
+
+type NextEpisode = {
+  id: number
+  season: number
+  episode: number
+  name: string
+  duration: string | null
+  thumbnail_url: string | null
+}
+
 export default async function EpisodePage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
+  const { id } = await params
+
   const { data: episode } = await supabase
     .from('episodes')
     .select('*, titles(*)')
-    .eq('id', params.id)
-    .single()
+    .eq('id', id)
+    .single<Episode>()
 
   if (!episode) notFound()
 
@@ -26,11 +50,13 @@ export default async function EpisodePage({
     .order('episode')
     .limit(8)
 
+  const nextEpisodes = (next ?? []) as NextEpisode[]
+
   return (
     <main className="min-h-screen bg-[#080808] text-white">
       <div className="px-8 pt-6 pb-2 flex items-center gap-4">
         <Link
-          href={`/title/${episode.title_id}`}
+          href={`/titulo/${episode.title_id}`}
           className="text-[10px] tracking-[3px] uppercase text-white/40 hover:text-white transition-colors"
         >
           Voltar
@@ -46,7 +72,7 @@ export default async function EpisodePage({
       </div>
 
       <div className="px-8 pb-8">
-        <p className="text-[9px] tracking-[4px] text-[#c9a84c] uppercase mb-1">
+        <p className="text-[9px] tracking-[4px] text-[#888] uppercase mb-1">
           Temporada {episode.season} · Episódio {episode.episode}
         </p>
         <h1 className="font-[family-name:var(--font-serif)] text-2xl italic">
@@ -57,13 +83,13 @@ export default async function EpisodePage({
         )}
       </div>
 
-      {next && next.length > 0 && (
+      {nextEpisodes.length > 0 && (
         <div className="px-8 pb-12">
-          <p className="text-[9px] tracking-[4px] text-[#c9a84c] uppercase mb-6">
+          <p className="text-[9px] tracking-[4px] text-[#888] uppercase mb-6">
             A seguir
           </p>
           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-            {next.map(ep => (
+            {nextEpisodes.map(ep => (
               <EpisodeCard key={ep.id} episode={ep} />
             ))}
           </div>

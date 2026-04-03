@@ -12,7 +12,7 @@ type Title = {
 
 export default function TitleCard({ title }: { title: Title }) {
   return (
-    <Link href={`/title/${title.id}`} className="group block">
+    <Link href={`/titulo/${title.id}`} className="group block">
       <div className="w-full aspect-[2/3] bg-[#111] border border-white/5 overflow-hidden relative">
         {title.cover_url ? (
           <img

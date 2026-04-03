@@ -4,9 +4,19 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import TitleCard from '@/components/TitleCard'
 
-export default function SearchPage() {
+type Title = {
+  id: number
+  name: string
+  type: string
+  cover_url: string | null
+  year: number | null
+  total_seasons: number | null
+  total_episodes: number | null
+}
+
+export default function PesquisarPage() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<any[]>([])
+  const [results, setResults] = useState<Title[]>([])
   const [searched, setSearched] = useState(false)
 
   async function handleSearch() {
@@ -15,7 +25,7 @@ export default function SearchPage() {
       .from('titles')
       .select('*')
       .ilike('name', `%${query}%`)
-    setResults(data || [])
+    setResults((data ?? []) as Title[])
     setSearched(true)
   }
 
@@ -32,11 +42,11 @@ export default function SearchPage() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSearch()}
-          className="flex-1 bg-white/5 border border-white/10 text-white text-sm px-4 py-3 outline-none focus:border-[#c9a84c] transition-colors placeholder:text-white/20"
+          className="flex-1 bg-white/5 border border-white/10 text-white text-sm px-4 py-3 outline-none focus:border-white/30 transition-colors placeholder:text-white/20"
         />
         <button
           onClick={handleSearch}
-          className="bg-[#c9a84c] text-black text-xs tracking-[3px] uppercase px-6 hover:opacity-80 transition-opacity"
+          className="bg-white text-black text-xs tracking-[3px] uppercase px-6 hover:bg-white/80 transition-opacity"
         >
           Buscar
         </button>
