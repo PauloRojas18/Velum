@@ -26,23 +26,30 @@ export default function SeasonSelect({
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-8">
-        <p className="text-[9px] tracking-[4px] text-[#888] uppercase">
-          Temporada
-        </p>
-        <select
-          value={active}
-          onChange={e => setActive(Number(e.target.value))}
-          className="bg-white/5 border border-white/10 text-white text-xs px-3 py-2 outline-none focus:border-white/30 transition-colors"
-        >
+      <div className="flex items-center gap-4 mb-8 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 rounded-full bg-gradient-to-b from-[#6366f1] to-[#8b5cf6]" />
+          <h2 className="text-lg font-semibold text-white">Episodios</h2>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-[#1a1a24] rounded-xl p-1 border border-[#2a2a3a]">
           {seasons.map(s => (
-            <option key={s} value={s} className="bg-[#111]">
-              Temporada {s}
-            </option>
+            <button
+              key={s}
+              onClick={() => setActive(s)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                active === s
+                  ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white shadow-lg shadow-[#6366f1]/20'
+                  : 'text-[#6b6b80] hover:text-white hover:bg-white/5'
+              }`}
+            >
+              T{s}
+            </button>
           ))}
-        </select>
-        <span className="text-white/20 text-xs">
-          {filtered.length} episódios
+        </div>
+        
+        <span className="text-sm text-[#6b6b80] bg-[#1a1a24] px-3 py-1.5 rounded-lg border border-[#2a2a3a]">
+          {filtered.length} episodios
         </span>
       </div>
 

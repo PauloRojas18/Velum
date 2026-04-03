@@ -1,23 +1,23 @@
 import type { Metadata } from 'next'
-import { Poppins, DM_Mono } from 'next/font/google'
+import { Inter, JetBrains_Mono } from 'next/font/google'
 import Navbar from '@/components/Navbar'
 import './globals.css'
 
-const poppins = Poppins({
+const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
-  weight: ['400', '700', '800'],
+  weight: ['400', '500', '600', '700'],
 })
 
-const dmMono = DM_Mono({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   weight: ['400', '500'],
 })
 
 export const metadata: Metadata = {
-  title: 'Arquivo',
-  description: 'Player pessoal',
+  title: 'Velum',
+  description: 'Seu streaming pessoal',
 }
 
 export default function RootLayout({
@@ -26,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" className={`${poppins.variable} ${dmMono.variable}`}>
-      <body className="bg-[#0a0a0a] text-white antialiased">
+    <html lang="pt-BR" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="bg-[#08080c] text-white antialiased">
         <Navbar />
         {children}
       </body>

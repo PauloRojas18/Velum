@@ -12,7 +12,7 @@ export default function DrivePlayer({ fileId, storage }: Props) {
       : fileId
 
   return (
-    <div className="w-full aspect-video bg-black">
+    <div className="w-full aspect-video bg-[#08080c] rounded-2xl overflow-hidden border border-[#2a2a3a] shadow-2xl shadow-[#6366f1]/5">
       <iframe
         src={src}
         className="w-full h-full"
