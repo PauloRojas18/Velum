@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import TitleCard from '@/components/TitleCard'
@@ -10,65 +10,53 @@ type Title = {
   genres?: string[] | null; admin_only?: boolean | null
 }
 
-export default function PesquisarPage() {
+function getIsAdminFromStorage(): boolean {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') ?? '{}')
+    return user?.is_admin === true
+  } catch {
+    return false
+  }
+}
+
+function PesquisarContent() {
   const searchParams = useSearchParams()
+  const generoParam = searchParams.get('genero')
+
   const [query, setQuery] = useState('')
   const [allTitles, setAllTitles] = useState<Title[]>([])
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [results, setResults] = useState<Title[]>([])
-  const [searched, setSearched] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null)
-  const [allGenres, setAllGenres] = useState<string[]>([])
+  const [isAdmin] = useState<boolean>(getIsAdminFromStorage)
+  const [searched, setSearched] = useState(!!generoParam)
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(generoParam)
 
   useEffect(() => {
-    try {
-      const user = JSON.parse(localStorage.getItem('user') ?? '{}')
-      setIsAdmin(user?.is_admin === true)
-    } catch {}
-
     supabase.from('titles').select('*').order('name').then(({ data }) => {
-      const titles = (data ?? []) as Title[]
-      setAllTitles(titles)
+      setAllTitles((data ?? []) as Title[])
     })
   }, [])
 
-  // Títulos visíveis considerando admin
   const visibleTitles = allTitles.filter(t => isAdmin || !t.admin_only)
+  const allGenres = Array.from(new Set(visibleTitles.flatMap(t => t.genres ?? []))).filter(Boolean).sort()
 
-  useEffect(() => {
-    const genres = Array.from(new Set(visibleTitles.flatMap(t => t.genres ?? []))).filter(Boolean).sort()
-    setAllGenres(genres)
-  }, [allTitles, isAdmin])
+  const results = searched
+    ? visibleTitles.filter(t => {
+        const matchQuery = query.trim() ? t.name.toLowerCase().includes(query.trim().toLowerCase()) : true
+        const matchGenre = selectedGenre ? t.genres?.includes(selectedGenre) : true
+        return matchQuery && matchGenre
+      })
+    : []
 
-  useEffect(() => {
-    const g = searchParams.get('genero')
-    if (g) setSelectedGenre(g)
-  }, [searchParams])
-
-  const applyFilters = useCallback(() => {
-    let filtered = visibleTitles
-    if (query.trim()) filtered = filtered.filter(t => t.name.toLowerCase().includes(query.trim().toLowerCase()))
-    if (selectedGenre) filtered = filtered.filter(t => t.genres?.includes(selectedGenre))
-    setResults(filtered)
-    setSearched(true)
-  }, [allTitles, isAdmin, query, selectedGenre])
-
-  useEffect(() => {
-    if (selectedGenre !== null || query.trim()) applyFilters()
-  }, [selectedGenre, applyFilters, query])
-
-  function handleSearch() {
-    setLoading(true)
-    setTimeout(() => { applyFilters(); setLoading(false) }, 100)
-  }
+  function handleSearch() { setSearched(true) }
 
   function toggleGenre(genre: string) {
     setSelectedGenre(prev => prev === genre ? null : genre)
+    setSearched(true)
   }
 
   function clearFilters() {
-    setQuery(''); setSelectedGenre(null); setResults([]); setSearched(false)
+    setQuery('')
+    setSelectedGenre(null)
+    setSearched(false)
   }
 
   const hasFilters = query.trim() || selectedGenre
@@ -85,12 +73,13 @@ export default function PesquisarPage() {
           <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: 'var(--text-muted)', pointerEvents: 'none' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <input type="text" placeholder="Nome do título..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()}
+          <input type="text" placeholder="Nome do título..." value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
             style={{ width: '100%', background: 'var(--surface-input)', border: '1px solid var(--surface-border)', color: 'var(--text-primary)', fontSize: 14, padding: '13px 16px 13px 46px', borderRadius: 12, outline: 'none', fontFamily: 'inherit' }} />
         </div>
-        <button onClick={handleSearch} disabled={loading}
-          style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', fontSize: 14, fontWeight: 600, padding: '0 24px', borderRadius: 12, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 90, fontFamily: 'inherit', opacity: loading ? 0.6 : 1 }}>
-          {loading ? <svg width="18" height="18" fill="none" viewBox="0 0 24 24" style={{ animation: 'spin 1s linear infinite' }}><circle cx="12" cy="12" r="10" stroke="white" strokeWidth="4" opacity="0.25"/><path fill="white" opacity="0.75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> : 'Buscar'}
+        <button onClick={handleSearch} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', fontSize: 14, fontWeight: 600, padding: '0 24px', borderRadius: 12, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 90, fontFamily: 'inherit' }}>
+          Buscar
         </button>
         {hasFilters && (
           <button onClick={clearFilters} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontSize: 13, fontWeight: 500, padding: '0 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}>
@@ -116,7 +105,7 @@ export default function PesquisarPage() {
         </div>
       )}
 
-      {results.length > 0 && (
+      {searched && results.length > 0 && (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
             <div style={{ width: 4, height: 24, borderRadius: 4, background: 'linear-gradient(to bottom,#6366f1,#8b5cf6)', flexShrink: 0 }} />
@@ -150,7 +139,14 @@ export default function PesquisarPage() {
           <p style={{ fontSize: 14, color: 'var(--text-muted)', textAlign: 'center' }}>Digite um nome ou selecione um gênero</p>
         </div>
       )}
-      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
     </main>
+  )
+}
+
+export default function PesquisarPage() {
+  return (
+    <Suspense>
+      <PesquisarContent />
+    </Suspense>
   )
 }
