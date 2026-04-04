@@ -23,35 +23,35 @@ export default async function TitlePage({ params }: { params: Promise<{ id: stri
   const firstEpisode = typedEpisodes[0]
 
   return (
-    <main style={{minHeight:'100vh',background:'#08080c',color:'white'}}>
+    <main style={{minHeight:'100vh',background:'var(--bg)',color:'var(--text-primary)'}}>
       {/* Hero */}
       <div style={{position:'relative',height:520,display:'flex',alignItems:'flex-end',padding:'80px 40px 48px',overflow:'hidden'}}>
         {title.cover_url && (
           <img src={title.cover_url} alt={title.name} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:0.38}} />
         )}
-        <div style={{position:'absolute',inset:0,background:'linear-gradient(to right,#08080c,rgba(8,8,12,0.88),transparent)'}} />
-        <div style={{position:'absolute',inset:0,background:'linear-gradient(to top,#08080c,rgba(8,8,12,0.55),transparent)'}} />
+        <div style={{position:'absolute',inset:0,background:'var(--hero-grad-side)'}} />
+        <div style={{position:'absolute',inset:0,background:'var(--hero-grad-bottom)'}} />
 
         <div style={{position:'relative',zIndex:10,maxWidth:700}}>
           <div style={{display:'inline-flex',alignItems:'center',gap:8,padding:'6px 14px',borderRadius:999,background:'rgba(99,102,241,0.12)',border:'1px solid rgba(99,102,241,0.22)',marginBottom:18}}>
             <span style={{width:6,height:6,borderRadius:'50%',background:'#6366f1',display:'inline-block',flexShrink:0}} />
             <span style={{fontSize:12,fontWeight:500,color:'#818cf8'}}>
               {title.type === 'series'
-                ? `Serie - ${title.total_seasons} temporadas - ${title.total_episodes} episodios`
+                ? `Série - ${title.total_seasons} temporadas - ${title.total_episodes} episódios`
                 : `Filme - ${title.year}`}
             </span>
           </div>
 
-          <h1 style={{fontSize:42,fontWeight:700,color:'white',lineHeight:1.15,marginBottom:16}}>{title.name}</h1>
+          <h1 style={{fontSize:42,fontWeight:700,color:'white',lineHeight:1.15,marginBottom:16,textShadow:'0 2px 20px rgba(0,0,0,0.6)'}}>{title.name}</h1>
 
           {title.description && (
-            <p style={{fontSize:15,color:'#a1a1b5',lineHeight:1.65,marginBottom:20,maxWidth:600}}>{title.description}</p>
+            <p style={{fontSize:15,color:'#ccc',lineHeight:1.65,marginBottom:20,maxWidth:600,textShadow:'0 1px 8px rgba(0,0,0,0.5)'}}>{title.description}</p>
           )}
 
           {title.genres && title.genres.length > 0 && (
             <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:24}}>
               {title.genres.map(g => (
-                <span key={g} style={{fontSize:12,fontWeight:500,color:'#a1a1b5',background:'#1a1a24',border:'1px solid #2a2a3a',padding:'5px 12px',borderRadius:8}}>
+                <span key={g} style={{fontSize:12,fontWeight:500,color:'#d1d1e0',background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.14)',padding:'5px 12px',borderRadius:8,backdropFilter:'blur(4px)'}}>
                   {g}
                 </span>
               ))}
@@ -68,7 +68,7 @@ export default async function TitlePage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* Content */}
-      <div style={{padding:'40px 40px 64px'}}>
+      <div style={{padding:'24px 40px 64px'}}>
         {title.type === 'series' && typedEpisodes.length > 0 && (
           <SeasonSelect seasons={seasons} episodes={typedEpisodes} />
         )}
@@ -77,7 +77,7 @@ export default async function TitlePage({ params }: { params: Promise<{ id: stri
           <div>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:24}}>
               <div style={{width:4,height:24,borderRadius:4,background:'linear-gradient(to bottom,#6366f1,#8b5cf6)',flexShrink:0}} />
-              <h2 style={{fontSize:17,fontWeight:600,color:'white'}}>Titulos semelhantes</h2>
+              <h2 style={{fontSize:17,fontWeight:600,color:'var(--text-primary)'}}>Títulos semelhantes</h2>
             </div>
             <div style={{display:'flex',gap:16,overflowX:'auto',paddingBottom:16}}>
               {typedSimilar.map(t => (

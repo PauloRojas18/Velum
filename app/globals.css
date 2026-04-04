@@ -1,23 +1,147 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --primary: #6366f1; --primary-light: #818cf8;
-  --accent: #8b5cf6; --accent-light: #a78bfa;
-  --surface: #0f0f14; --surface-light: #1a1a24; --surface-border: #2a2a3a;
-  --text-primary: #f1f1f5; --text-secondary: #a1a1b5; --text-muted: #6b6b80;
+
+/* ── Tema escuro (padrão) ── */
+:root,
+[data-theme="dark"] {
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --accent: #8b5cf6;
+  --accent-light: #a78bfa;
+
+  --bg: #08080c;
+  --bg-nav: rgba(8,8,12,0.96);
+  --surface: #0f0f14;
+  --surface-light: #1a1a24;
+  --surface-border: #2a2a3a;
+  --surface-card: rgba(15,15,20,0.85);
+  --surface-input: #1a1a24;
+  --surface-input-disabled: rgba(26,26,36,0.5);
+
+  --text-primary: #f1f1f5;
+  --text-secondary: #a1a1b5;
+  --text-muted: #6b6b80;
+  --text-faint: #444;
+
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-card: rgba(99,102,241,0.12);
+
+  --scrollbar-track: #0f0f14;
+  --scrollbar-thumb: #2a2a3a;
+
+  --nav-link-active-bg: rgba(255,255,255,0.08);
+  --nav-link-color: rgba(255,255,255,0.55);
+  --nav-bg-scrolled: rgba(8,8,12,0.96);
+  --nav-border: rgba(255,255,255,0.06);
+
+  /* Hero gradients */
+  --hero-grad-bottom: linear-gradient(to top, #08080c 0%, rgba(8,8,12,0.65) 45%, rgba(8,8,12,0.1) 100%);
+  --hero-grad-side: linear-gradient(to right, #08080c 0%, rgba(8,8,12,0.4) 55%, transparent 100%);
+
+  /* Card overlay */
+  --card-overlay: linear-gradient(to top, rgba(8,8,12,0.98) 0%, rgba(8,8,12,0.4) 50%, transparent 100%);
+  --card-hover-overlay: linear-gradient(to top, #08080c, transparent);
+
+  /* Episode / title card backgrounds */
+  --card-bg: #1a1a24;
+  --card-border: #2a2a3a;
+  --card-placeholder-bg: linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1));
+  --card-placeholder-color: rgba(99,102,241,0.3);
+
+  /* Spotlight inactive overlay */
+  --spotlight-overlay: rgba(8,8,12,0.75);
+
+  /* Player border */
+  --player-border: #1a1a2e;
+
+  /* Season selector bg */
+  --season-bg: #1a1a24;
+  --season-border: #2a2a3a;
+  --season-count-bg: #1a1a24;
+  --season-count-border: #2a2a3a;
 }
+
+/* ── Tema claro — suave, não cega ── */
+[data-theme="light"] {
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --accent: #8b5cf6;
+  --accent-light: #a78bfa;
+
+  --bg: #eeeef4;
+  --bg-nav: rgba(238,238,244,0.96);
+  --surface: #e4e4ec;
+  --surface-light: #f4f4fa;
+  --surface-border: #d0d0de;
+  --surface-card: rgba(244,244,250,0.92);
+  --surface-input: #f4f4fa;
+  --surface-input-disabled: rgba(228,228,236,0.8);
+
+  --text-primary: #16161e;
+  --text-secondary: #4a4a60;
+  --text-muted: #70708a;
+  --text-faint: #aaaabc;
+
+  --border-subtle: rgba(0,0,0,0.07);
+  --border-card: rgba(99,102,241,0.18);
+
+  --scrollbar-track: #e4e4ec;
+  --scrollbar-thumb: #c4c4d4;
+
+  --nav-link-active-bg: rgba(99,102,241,0.1);
+  --nav-link-color: rgba(22,22,30,0.5);
+  --nav-bg-scrolled: rgba(238,238,244,0.96);
+  --nav-border: rgba(0,0,0,0.08);
+
+  /* Hero gradients */
+  --hero-grad-bottom: linear-gradient(to top, #eeeef4 0%, rgba(238,238,244,0.65) 5%, rgba(238,238,244,0.1) 20%);
+  --hero-grad-side: linear-gradient(to right, #eeeef4 0%, rgba(238,238,244,0.4) 10%, transparent 100%);
+
+  /* Card overlay */
+  --card-overlay: linear-gradient(to top, rgba(22,22,30,0.92) 0%, rgba(22,22,30,0.35) 50%, transparent 100%);
+  --card-hover-overlay: linear-gradient(to top, #eeeef4, transparent);
+
+  /* Episode / title card backgrounds */
+  --card-bg: #dcdce8;
+  --card-border: #c8c8d8;
+  --card-placeholder-bg: linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));
+  --card-placeholder-color: rgba(99,102,241,0.4);
+
+  /* Spotlight inactive overlay */
+  --spotlight-overlay: rgba(238,238,244,0.75);
+
+  /* Player border */
+  --player-border: #c8c8d8;
+
+  /* Season selector bg */
+  --season-bg: #dcdce8;
+  --season-border: #c8c8d8;
+  --season-count-bg: #dcdce8;
+  --season-count-border: #c8c8d8;
+}
+
 html { scroll-behavior: smooth; }
-body { background: #08080c; color: var(--text-primary); font-family: var(--font-sans, 'Inter', system-ui, sans-serif); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
+
 a { text-decoration: none; color: inherit; }
 button { cursor: pointer; font-family: inherit; border: none; background: none; }
 input { font-family: inherit; }
+
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 3px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-/* Mobile responsiveness */
 @media (max-width: 640px) {
   main { padding-left: 16px !important; padding-right: 16px !important; }
 }

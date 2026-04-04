@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import VelumLogo from '@/components/VelumLogo'
 
 interface User { id:number; name:string; email:string; avatar_color:string|null; is_admin:boolean }
 
@@ -21,11 +22,76 @@ export default function LoginPage() {
   }
 
   return (
-    <main style={{minHeight:'100vh',background:'#08080c',display:'flex',alignItems:'center',justifyContent:'center',padding:16,position:'relative',overflow:'hidden'}}>
-      <div style={{position:'absolute',top:'25%',left:-80,width:260,height:260,borderRadius:'50%',background:'rgba(99,102,241,0.18)',filter:'blur(60px)',pointerEvents:'none'}} />
-      <div style={{position:'absolute',bottom:'25%',right:-80,width:260,height:260,borderRadius:'50%',background:'rgba(139,92,246,0.18)',filter:'blur(60px)',pointerEvents:'none'}} />
-      <div style={{width:'100%',maxWidth:420,background:'rgba(15,15,20,0.9)',backdropFilter:'blur(12px)',border:'1px solid rgba(99,102,241,0.14)',borderRadius:20,padding:'36px 32px',boxShadow:'0 20px 60px rgba(0,0,0,0.5)',position:'relative',zIndex:1}}>
-        <div style={{width:64,height:64,borderRadius:16,background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,fontWeight:700,color:'white',margin:'0 auto 18px',boxShadow:'0 8px 24px rgba(99,102,241,0.3)'}}>V</div>
+    <main style={{
+      minHeight: '100vh',
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 16,
+      overflow: 'hidden',
+      // Imagem de fundo
+      backgroundImage: `url('https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/f562aaf4-5dbb-4603-a32b-6ef6c2230136/dh0w8qv-9d8ee6b2-b41a-4681-ab9b-8a227560dc75.jpg/v1/fill/w_1192,h_670,q_70,strp/the_netflix_login_background__canada__2024___by_logofeveryt_dh0w8qv-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NzIwIiwicGF0aCI6Ii9mL2Y1NjJhYWY0LTVkYmItNDYwMy1hMzJiLTZlZjZjMjIzMDEzNi9kaDB3OHF2LTlkOGVlNmIyLWI0MWEtNDY4MS1hYjliLThhMjI3NTYwZGM3NS5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.FScrpAAFnKqBVKwe2syeiOww6mfH6avq-DRHZ_uFVNw')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }}>
+      {/* Overlay escuro (filtro) */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)', // Ajuste a opacidade conforme desejar
+        zIndex: 0,
+      }} />
+
+      {/* Círculos de blur originais (opcionais – se quiser manter) */}
+      <div style={{
+        position: 'absolute',
+        top: '25%',
+        left: -80,
+        width: 260,
+        height: 260,
+        borderRadius: '50%',
+        background: 'rgba(99,102,241,0.18)',
+        filter: 'blur(60px)',
+        pointerEvents: 'none',
+        zIndex: 1,
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '25%',
+        right: -80,
+        width: 260,
+        height: 260,
+        borderRadius: '50%',
+        background: 'rgba(139,92,246,0.18)',
+        filter: 'blur(60px)',
+        pointerEvents: 'none',
+        zIndex: 1,
+      }} />
+
+      {/* Card de login */}
+      <div style={{
+        width: '100%',
+        maxWidth: 380,
+        background: 'color-mix(in srgb, var(--card) 92%, transparent)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(99,102,241,0.14)',
+        borderRadius: 20,
+        padding: '48px 32px',
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        position: 'relative',
+        zIndex: 2,
+        WebkitBackdropFilter: "blur(20px)",
+        transform: 'scale(0.9)',
+        transformOrigin: 'center center',
+      }}>
+        <div style={{width:64,height:64,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 18px'}}>
+          <VelumLogo variant='default'/>
+        </div>
         <h1 style={{fontSize:22,fontWeight:700,color:'white',textAlign:'center',marginBottom:6}}>Bem-vindo ao Velum</h1>
         <p style={{fontSize:13,color:'#6b6b80',textAlign:'center',marginBottom:28}}>Entre para acessar seu streaming pessoal</p>
         <div style={{display:'flex',flexDirection:'column',gap:16}}>

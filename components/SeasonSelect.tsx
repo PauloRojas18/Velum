@@ -13,15 +13,15 @@ export default function SeasonSelect({ seasons, episodes }: { seasons: number[];
       <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:32,flexWrap:'wrap'}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <div style={{width:4,height:24,borderRadius:4,background:'linear-gradient(to bottom,#6366f1,#8b5cf6)',flexShrink:0}} />
-          <h2 style={{fontSize:17,fontWeight:600,color:'white'}}>Episodios</h2>
+          <h2 style={{fontSize:17,fontWeight:600,color:'var(--text-primary)'}}>Episódios</h2>
         </div>
 
-        <div style={{display:'flex',alignItems:'center',gap:6,background:'#1a1a24',borderRadius:12,padding:4,border:'1px solid #2a2a3a'}}>
+        <div style={{display:'flex',alignItems:'center',gap:6,background:'var(--season-bg)',borderRadius:12,padding:4,border:'1px solid var(--season-border)'}}>
           {seasons.map(s => (
             <button key={s} onClick={() => setActive(s)}
               style={{padding:'8px 16px',borderRadius:9,fontSize:14,fontWeight:500,border:'none',cursor:'pointer',transition:'all 0.2s',fontFamily:'inherit',
                 background: active === s ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : 'transparent',
-                color: active === s ? 'white' : '#6b6b80',
+                color: active === s ? 'white' : 'var(--text-muted)',
                 boxShadow: active === s ? '0 2px 12px rgba(99,102,241,0.25)' : 'none',
               }}>
               T{s}
@@ -29,8 +29,8 @@ export default function SeasonSelect({ seasons, episodes }: { seasons: number[];
           ))}
         </div>
 
-        <span style={{fontSize:13,color:'#6b6b80',background:'#1a1a24',padding:'5px 12px',borderRadius:8,border:'1px solid #2a2a3a'}}>
-          {filtered.length} episodios
+        <span style={{fontSize:13,color:'var(--text-muted)',background:'var(--season-count-bg)',padding:'5px 12px',borderRadius:8,border:'1px solid var(--season-count-border)'}}>
+          {filtered.length} episódios
         </span>
       </div>
 
