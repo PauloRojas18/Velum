@@ -15,7 +15,7 @@ type Title = {
 function Row({ label, titles, href }: { label: string; titles: Title[]; href?: string }) {
   return (
     <div style={{ marginBottom: 8, paddingTop: 32 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px', marginBottom: 14 }}>
+      <div className="row-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 3, height: 18, borderRadius: 3, background: 'linear-gradient(to bottom,#6366f1,#8b5cf6)', flexShrink: 0 }} />
           <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{label}</h2>
@@ -24,9 +24,9 @@ function Row({ label, titles, href }: { label: string; titles: Title[]; href?: s
           Ver tudo <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
         </Link>
       </div>
-      <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '4px 48px 12px', scrollbarWidth: 'none' as const }}>
+      <div className="row-scroll" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 12, scrollbarWidth: 'none' as const }}>
         {titles.map(t => (
-          <div key={t.id} style={{ flexShrink: 0, width: 152 }}>
+          <div key={t.id} className="row-card" style={{ flexShrink: 0 }}>
             <TitleCard title={t} />
           </div>
         ))}
@@ -52,7 +52,6 @@ export default function HomePage() {
     })
   }, [])
 
-  // Filtra títulos admin_only se não for admin
   const visibleTitles = titles.filter(t => isAdmin || !t.admin_only)
 
   const featuredTitles = visibleTitles.filter(t => t.cover_url).slice(0, 5)
@@ -85,7 +84,8 @@ export default function HomePage() {
       {/* HERO */}
       {featuredTitles.length > 0 && current && (
         <section
-          style={{ position: 'relative', height: '85vh', minHeight: 500, overflow: 'hidden' }}
+          className="hero-section"
+          style={{ position: 'relative', overflow: 'hidden' }}
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
@@ -98,28 +98,28 @@ export default function HomePage() {
             <div style={{ position: 'absolute', inset: 0, background: 'var(--hero-grad-side)' }} />
           </div>
 
-          <button onClick={goToPrev} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: 999, padding: 8, cursor: 'pointer', color: 'white', zIndex: 20 }}>
+          <button onClick={goToPrev} className="hero-nav-btn hero-nav-prev" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: 999, padding: 8, cursor: 'pointer', color: 'white', zIndex: 20 }}>
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <button onClick={goToNext} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: 999, padding: 8, cursor: 'pointer', color: 'white', zIndex: 20 }}>
+          <button onClick={goToNext} className="hero-nav-btn hero-nav-next" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: 999, padding: 8, cursor: 'pointer', color: 'white', zIndex: 20 }}>
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
           </button>
 
-          <div style={{ position: 'absolute', bottom: 20, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 8, zIndex: 20 }}>
+          <div className="hero-dots" style={{ position: 'absolute', bottom: 20, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 8, zIndex: 20 }}>
             {featuredTitles.map((_, idx) => (
               <button key={idx} onClick={() => setCurrentHeroIndex(idx)}
                 style={{ height: 4, borderRadius: 4, background: idx === currentHeroIndex ? '#818cf8' : 'rgba(255,255,255,0.4)', width: idx === currentHeroIndex ? 32 : 16, transition: 'all 0.2s', border: 'none', cursor: 'pointer' }} />
             ))}
           </div>
 
-          <div style={{ position: 'absolute', bottom: 80, left: 52, maxWidth: 500, zIndex: 10 }}>
+          <div className="hero-content" style={{ position: 'absolute', bottom: 80, zIndex: 10 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366f1' }} />
               <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2.5, color: '#818cf8', textTransform: 'uppercase' }}>
                 {current.type === 'series' ? 'Série' : 'Filme'}{current.year ? ` · ${current.year}` : ''}
               </span>
             </div>
-            <h1 style={{ fontSize: 54, fontWeight: 900, lineHeight: 1.02, marginBottom: 14, letterSpacing: -1.5, color: 'white', textShadow: '0 2px 24px rgba(0,0,0,0.7)' }}>
+            <h1 className="hero-title" style={{ fontWeight: 900, lineHeight: 1.02, marginBottom: 14, letterSpacing: -1.5, color: 'white', textShadow: '0 2px 24px rgba(0,0,0,0.7)' }}>
               {current.name}
             </h1>
             {current.type === 'series' && current.total_seasons && (
@@ -128,12 +128,12 @@ export default function HomePage() {
               </p>
             )}
             {current.description && (
-              <p style={{ fontSize: 14, color: '#bbb', lineHeight: 1.7, marginBottom: 20, maxWidth: 420, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              <p className="hero-description" style={{ fontSize: 14, color: '#bbb', lineHeight: 1.7, marginBottom: 20, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                 {current.description}
               </p>
             )}
             {current.genres && current.genres.length > 0 && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+              <div className="hero-genres" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
                 {current.genres.map(g => (
                   <Link key={g} href={`/pesquisar?genero=${encodeURIComponent(g)}`}
                     style={{ fontSize: 11, fontWeight: 500, color: '#d1d1e0', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.14)', padding: '4px 10px', borderRadius: 6, textDecoration: 'none', backdropFilter: 'blur(4px)' }}>
@@ -142,7 +142,7 @@ export default function HomePage() {
                 ))}
               </div>
             )}
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div className="hero-buttons" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href={`/titulo/${current.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', background: 'white', color: '#08080c', borderRadius: 8, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
                 <svg width="16" height="16" fill="#08080c" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 Assistir
@@ -157,7 +157,7 @@ export default function HomePage() {
       )}
 
       {/* ROWS */}
-      <div style={{ paddingBottom: 64, marginTop: featuredTitles.length ? -36 : 80, position: 'relative', zIndex: 2 }}>
+      <div className="rows-container" style={{ paddingBottom: 64, marginTop: featuredTitles.length ? -36 : 80, position: 'relative', zIndex: 2 }}>
         {visibleTitles.length > 0 && <Row label="Novidades" titles={visibleTitles.slice(0, 10)} />}
         {series.length > 0 && <Row label="Séries" titles={series} />}
         {movies.length > 0 && <Row label="Filmes" titles={movies} />}
@@ -170,6 +170,98 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      <style>{`
+        .hero-section {
+          height: 85vh;
+          min-height: 500px;
+        }
+        .hero-content {
+          left: 52px;
+          max-width: 500px;
+        }
+        .hero-title {
+          font-size: 54px;
+        }
+        .hero-description {
+          max-width: 420px;
+        }
+        .row-header {
+          padding: 0 48px;
+        }
+        .row-scroll {
+          padding-left: 48px;
+          padding-right: 48px;
+        }
+        .row-card {
+          width: 152px;
+        }
+
+        @media (max-width: 768px) {
+          .hero-section {
+            height: 70vh;
+            min-height: 400px;
+          }
+          .hero-content {
+            left: 20px;
+            right: 20px;
+            max-width: none;
+            bottom: 60px;
+          }
+          .hero-title {
+            font-size: 28px;
+            letter-spacing: -0.5px;
+          }
+          .hero-description {
+            font-size: 13px;
+            max-width: none;
+            -webkit-line-clamp: 2;
+          }
+          .hero-genres {
+            display: none !important;
+          }
+          .hero-buttons {
+            flex-direction: column;
+            gap: 8px;
+          }
+          .hero-buttons a {
+            width: 100%;
+            justify-content: center;
+            padding: 10px 20px !important;
+            font-size: 14px !important;
+          }
+          .hero-nav-btn {
+            display: none !important;
+          }
+          .hero-dots {
+            bottom: 12px !important;
+          }
+          .row-header {
+            padding: 0 16px !important;
+          }
+          .row-scroll {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            gap: 8px !important;
+          }
+          .row-card {
+            width: 120px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .hero-section {
+            height: 60vh;
+            min-height: 350px;
+          }
+          .hero-title {
+            font-size: 24px;
+          }
+          .row-card {
+            width: 110px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

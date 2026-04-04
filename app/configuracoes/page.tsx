@@ -76,19 +76,19 @@ export default function SettingsPage() {
   const { user, name, color } = profile
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', paddingTop: 80, paddingBottom: 64, paddingLeft: 40, paddingRight: 40 }}>
+    <main className="config-main" style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', paddingTop: 80, paddingBottom: 64 }}>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
             <Link href="/perfil" style={{ width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', background: 'var(--surface)' }}>
               <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </Link>
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Configurações</h1>
+            <h1 className="config-title" style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Configurações</h1>
           </div>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 36, marginLeft: 44 }}>Personalize seu perfil</p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ maxWidth: 520 }}>
+          <div className="config-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="config-cards" style={{ maxWidth: 520, width: '100%' }}>
               <div style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 18 }}>
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#6366f1"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -113,11 +113,11 @@ export default function SettingsPage() {
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#8b5cf6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
                   Cor do avatar
                 </h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+                <div className="avatar-section" style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
                   <div style={{ width: 64, height: 64, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, textTransform: 'uppercase', flexShrink: 0, color: 'white', background: `linear-gradient(135deg,${color},${color}bb)`, boxShadow: `0 8px 32px ${color}40`, transition: 'all 0.3s' }}>
                     {name[0] || 'U'}
                   </div>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <div className="color-options" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                     {COLORS.map(c => (
                       <button key={c} onClick={() => setProfile(prev => prev ? { ...prev, color: c } : prev)}
                         style={{ width: 40, height: 40, borderRadius: 10, background: `linear-gradient(135deg,${c},${c}bb)`, border: 'none', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s', outline: color === c ? `3px solid ${c}` : 'none', outlineOffset: color === c ? 3 : 0, boxShadow: color === c ? `0 4px 20px ${c}40` : 'none' }} />
@@ -131,7 +131,7 @@ export default function SettingsPage() {
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#a78bfa"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
                   Aparência
                 </h2>
-                <div style={{ display: 'flex', gap: 14 }}>
+                <div className="theme-options" style={{ display: 'flex', gap: 14 }}>
                   <button onClick={() => setTheme('dark')}
                     style={{ flex: 1, padding: 0, border: theme === 'dark' ? '2px solid #6366f1' : '2px solid var(--surface-border)', borderRadius: 12, cursor: 'pointer', background: 'none', boxShadow: theme === 'dark' ? '0 0 0 3px rgba(99,102,241,0.18)' : 'none', transition: 'all 0.2s', overflow: 'hidden' }}>
                     <div style={{ background: '#0d0d12', padding: '16px 14px 10px', borderRadius: '10px 10px 0 0' }}>
@@ -174,7 +174,43 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-      <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+
+      <style>{`
+        @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        
+        .config-main {
+          padding-left: 40px;
+          padding-right: 40px;
+        }
+
+        @media (max-width: 768px) {
+          .config-main {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            padding-top: 70px !important;
+          }
+          .config-title {
+            font-size: 22px !important;
+          }
+          .config-cards {
+            max-width: none !important;
+          }
+          .avatar-section {
+            flex-direction: column;
+            align-items: flex-start !important;
+          }
+          .color-options {
+            gap: 10px !important;
+          }
+          .color-options button {
+            width: 36px !important;
+            height: 36px !important;
+          }
+          .theme-options {
+            flex-direction: column;
+          }
+        }
+      `}</style>
     </main>
   )
 }

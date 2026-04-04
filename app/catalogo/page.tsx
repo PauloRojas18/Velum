@@ -3,166 +3,313 @@
 import { supabase } from '@/lib/supabase'
 import TitleCard from '@/components/TitleCard'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 type Title = {
   id: number; name: string; type: string; cover_url: string | null
   year: number | null; total_seasons: number | null; total_episodes: number | null
-  description?: string | null; featured?: boolean | null; genres?: string[] | null
+  featured?: boolean | null; description?: string | null; genres?: string[] | null
   admin_only?: boolean | null
 }
 
-function getIsAdminFromStorage(): boolean {
-  try {
-    const user = JSON.parse(localStorage.getItem('user') ?? '{}')
-    return user?.is_admin === true
-  } catch {
-    return false
-  }
+function Row({ label, titles, href, showRank = false }: { 
+  label: string; 
+  titles: Title[]; 
+  href?: string;
+  showRank?: boolean;
+}) {
+  return (
+    <div style={{ marginBottom: 8, paddingTop: 32 }}>
+      <div className="row-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 3, height: 18, borderRadius: 3, background: 'linear-gradient(to bottom,#6366f1,#8b5cf6)', flexShrink: 0 }} />
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{label}</h2>
+        </div>
+        <Link href={href ?? '/catalogo'} style={{ fontSize: 12, color: 'var(--text-faint)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+          Ver tudo <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+        </Link>
+      </div>
+      <div className="row-scroll" style={{ display: 'flex', gap: showRank ? 14 : 10, overflowX: 'auto', paddingBottom: 12, scrollbarWidth: 'none' as const }}>
+        {titles.map((title, idx) => (
+          <div key={title.id} className={showRank ? 'row-card-rank' : 'row-card'} style={{ flexShrink: 0 }}>
+            {showRank ? (
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', width: 152, paddingLeft: 36 }}>
+                <span style={{
+                  position: 'absolute',
+                  left: -15,
+                  bottom: 25,
+                  fontSize: 100,
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  color: 'transparent',
+                  WebkitTextStroke: '2px rgba(255,255,255,0.15)',
+                  lineHeight: 1,
+                  userSelect: 'none',
+                  zIndex: 0,
+                  letterSpacing: -6,
+                }}>
+                  {idx + 1}
+                </span>
+                <div style={{ position: 'relative', zIndex: 1, width: 116 }}>
+                  <TitleCard title={title} />
+                </div>
+              </div>
+            ) : (
+              <TitleCard title={title} />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function CatalogoPage() {
   const [titles, setTitles] = useState<Title[]>([])
-  const [isAdmin] = useState<boolean>(getIsAdminFromStorage)
-  const [spotlightIndex, setSpotlightIndex] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
-  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') ?? '{}')
+      setIsAdmin(user?.is_admin === true)
+    } catch {}
+
     supabase.from('titles').select('*').order('name').then(({ data }) => {
       setTitles((data ?? []) as Title[])
-      setLoaded(true)
     })
   }, [])
 
   const visibleTitles = titles.filter(t => isAdmin || !t.admin_only)
-  const featured = visibleTitles.filter(t => t.featured)
-  const spotlight = (featured.length > 0 ? featured : visibleTitles.filter(t => t.cover_url)).slice(0, 5)
-  const series = visibleTitles.filter(t => t.type === 'series')
-  const movies = visibleTitles.filter(t => t.type === 'movie')
-  const current = spotlight[spotlightIndex]
 
-  function goToNext() {
-    setSpotlightIndex(prev => (prev + 1) % spotlight.length)
-  }
+  const featuredTitles = visibleTitles.filter(t => t.cover_url).slice(0, 5)
+  const current = featuredTitles[currentHeroIndex]
 
-  function goToPrev() {
-    setSpotlightIndex(prev => (prev - 1 + spotlight.length) % spotlight.length)
+  const goToNext = useCallback(() => {
+    setCurrentHeroIndex((prev) => (prev + 1) % featuredTitles.length)
+  }, [featuredTitles.length])
+
+  const goToPrev = () => {
+    setCurrentHeroIndex((prev) => (prev - 1 + featuredTitles.length) % featuredTitles.length)
   }
 
   useEffect(() => {
-    if (isHovering || spotlight.length === 0) return
-    const interval = setInterval(goToNext, 3000)
+    if (isHovering || featuredTitles.length === 0) return
+    const interval = setInterval(goToNext, 4000)
     return () => clearInterval(interval)
-  }, [isHovering, spotlight.length, spotlightIndex])
+  }, [isHovering, goToNext, featuredTitles.length])
+
+  const series = visibleTitles.filter(t => t.type === 'series')
+  const movies = visibleTitles.filter(t => t.type === 'movie')
+  const recent = [...visibleTitles].sort((a,b) => (b.year || 0) - (a.year || 0)).slice(0, 10)
+  const recommended = visibleTitles.filter(t => t.featured).length > 0 ? visibleTitles.filter(t => t.featured) : visibleTitles.slice(0, 8)
+
+  const genreMap = new Map<string, Title[]>()
+  visibleTitles.forEach(title => {
+    title.genres?.forEach(genre => {
+      if (!genreMap.has(genre)) genreMap.set(genre, [])
+      genreMap.get(genre)!.push(title)
+    })
+  })
+  const genreRows = Array.from(genreMap.entries())
+    .sort((a,b) => b[1].length - a[1].length)
+    .slice(0, 4)
+    .map(([genre, items]) => ({ genre, titles: items.slice(0, 10) }))
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', paddingBottom: 64, paddingTop: 64 }}>
-
-      <div style={{ padding: '32px 48px 0' }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Catálogo</h1>
-        <p style={{ fontSize: 14, color: 'var(--text-faint)' }}>Explore todos os títulos disponíveis</p>
-      </div>
-
-      {loaded && spotlight.length > 0 && current && (
-        <div style={{ marginTop: 32, position: 'relative' }}
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)' }}>
+      {featuredTitles.length > 0 && current && (
+        <section
+          className="hero-section"
+          style={{ position: 'relative', overflow: 'hidden' }}
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 48px', marginBottom: 16 }}>
-            <div style={{ width: 3, height: 20, borderRadius: 3, background: 'linear-gradient(to bottom,#6366f1,#8b5cf6)', flexShrink: 0 }} />
-            <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Em destaque</h2>
+          <div style={{ position: 'absolute', inset: 0 }}>
+            {current.cover_url && (
+              <img src={current.cover_url} alt={current.name}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
+            )}
+            <div style={{ position: 'absolute', inset: 0, background: 'var(--hero-grad-bottom)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'var(--hero-grad-side)' }} />
           </div>
 
-          <div style={{ position: 'relative', overflow: 'hidden' }}>
-            <button onClick={goToPrev} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'var(--surface-card)', border: '1px solid var(--surface-border)', borderRadius: 999, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)', zIndex: 20, backdropFilter: 'blur(8px)' }}>
-              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
-            </button>
-            <button onClick={goToNext} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'var(--surface-card)', border: '1px solid var(--surface-border)', borderRadius: 999, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-primary)', zIndex: 20, backdropFilter: 'blur(8px)' }}>
-              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
-            </button>
+          <button onClick={goToPrev} className="hero-nav-btn hero-nav-prev" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: 999, padding: 8, cursor: 'pointer', color: 'white', zIndex: 20 }}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button onClick={goToNext} className="hero-nav-btn hero-nav-next" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: 999, padding: 8, cursor: 'pointer', color: 'white', zIndex: 20 }}>
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+          </button>
 
-            <div style={{ display: 'flex', padding: '4px 48px 20px', overflowX: 'auto', scrollbarWidth: 'none' as const, alignItems: 'flex-end' }}>
-              {spotlight.map((t, i) => {
-                const isActive = i === spotlightIndex
-                return (
-                  <Link key={t.id} href={`/titulo/${t.id}`} onClick={() => setSpotlightIndex(i)}
-                    style={{ flexShrink: 0, width: isActive ? 300 : 220, height: isActive ? 400 : 330, borderRadius: 14, overflow: 'hidden', position: 'relative', display: 'block', textDecoration: 'none', border: isActive ? '2px solid rgba(99,102,241,0.6)' : '1px solid var(--surface-border)', boxShadow: isActive ? '0 16px 48px rgba(99,102,241,0.3)' : '0 8px 24px rgba(0,0,0,0.12)', transition: 'all 0.4s cubic-bezier(0.4,0,0.2,1)', transform: isActive ? 'scale(1)' : 'scale(0.95)', opacity: isActive ? 1 : 0.65 }}
-                  >
-                    {t.cover_url
-                      ? <img src={t.cover_url} alt={t.name} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }} />
-                      : <div style={{ position: 'absolute', inset: 0, background: 'var(--surface-light)' }} />
-                    }
-                    <div style={{ position: 'absolute', inset: 0, background: 'var(--card-overlay)' }} />
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: isActive ? '18px 16px' : '12px 12px' }}>
-                      <span style={{ display: 'inline-block', fontSize: 9, fontWeight: 700, letterSpacing: 2, color: '#818cf8', marginBottom: 5, textTransform: 'uppercase' as const }}>
-                        {t.type === 'series' ? 'SÉRIE' : 'FILME'}{t.year ? ` · ${t.year}` : ''}
-                      </span>
-                      <p style={{ fontSize: isActive ? 16 : 13, fontWeight: 800, color: 'white', lineHeight: 1.2, marginBottom: isActive ? 8 : 0 }}>{t.name}</p>
-                      {isActive && t.description && (
-                        <p style={{ fontSize: 11, color: '#bbb', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden', marginBottom: 8 }}>
-                          {t.description}
-                        </p>
-                      )}
-                      {isActive && t.genres && t.genres.length > 0 && (
-                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                          {t.genres.slice(0, 3).map(g => (
-                            <span key={g} style={{ fontSize: 9, color: '#d1d1e0', background: 'rgba(255,255,255,0.1)', padding: '2px 7px', borderRadius: 4 }}>{g}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {!isActive && (
-                      <div style={{ position: 'absolute', top: 10, left: 10, width: 24, height: 24, borderRadius: 6, background: 'var(--spotlight-overlay)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', backdropFilter: 'blur(4px)' }}>
-                        {i + 1}
-                      </div>
-                    )}
+          <div className="hero-dots" style={{ position: 'absolute', bottom: 20, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 8, zIndex: 20 }}>
+            {featuredTitles.map((_, idx) => (
+              <button key={idx} onClick={() => setCurrentHeroIndex(idx)}
+                style={{ height: 4, borderRadius: 4, background: idx === currentHeroIndex ? '#818cf8' : 'rgba(255,255,255,0.4)', width: idx === currentHeroIndex ? 32 : 16, transition: 'all 0.2s', border: 'none', cursor: 'pointer' }} />
+            ))}
+          </div>
+
+          <div className="hero-content" style={{ position: 'absolute', bottom: 80, zIndex: 10 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366f1' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2.5, color: '#818cf8', textTransform: 'uppercase' }}>
+                {current.type === 'series' ? 'Série' : 'Filme'}{current.year ? ` · ${current.year}` : ''}
+              </span>
+            </div>
+            <h1 className="hero-title" style={{ fontWeight: 900, lineHeight: 1.02, marginBottom: 14, letterSpacing: -1.5, color: 'white', textShadow: '0 2px 24px rgba(0,0,0,0.7)' }}>
+              {current.name}
+            </h1>
+            {current.type === 'series' && current.total_seasons && (
+              <p style={{ fontSize: 13, color: '#aaa', marginBottom: 10 }}>
+                {current.total_seasons} temporada{current.total_seasons > 1 ? 's' : ''}
+              </p>
+            )}
+            {current.description && (
+              <p className="hero-description" style={{ fontSize: 14, color: '#bbb', lineHeight: 1.7, marginBottom: 20, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                {current.description}
+              </p>
+            )}
+            {current.genres && current.genres.length > 0 && (
+              <div className="hero-genres" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+                {current.genres.map(g => (
+                  <Link key={g} href={`/pesquisar?genero=${encodeURIComponent(g)}`}
+                    style={{ fontSize: 11, fontWeight: 500, color: '#d1d1e0', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.14)', padding: '4px 10px', borderRadius: 6, textDecoration: 'none', backdropFilter: 'blur(4px)' }}>
+                    {g}
                   </Link>
-                )
-              })}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 6, paddingBottom: 8 }}>
-              {spotlight.map((_, idx) => (
-                <button key={idx} onClick={() => setSpotlightIndex(idx)}
-                  style={{ height: 3, borderRadius: 3, background: idx === spotlightIndex ? '#818cf8' : 'var(--surface-border)', width: idx === spotlightIndex ? 24 : 12, transition: 'all 0.2s', border: 'none', cursor: 'pointer', padding: 0 }} />
-              ))}
+                ))}
+              </div>
+            )}
+            <div className="hero-buttons" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <Link href={`/titulo/${current.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 28px', background: 'white', color: '#08080c', borderRadius: 8, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
+                <svg width="16" height="16" fill="#08080c" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Assistir
+              </Link>
+              <Link href={`/titulo/${current.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: 'rgba(255,255,255,0.14)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.12)', color: 'white', borderRadius: 8, fontWeight: 600, fontSize: 15, textDecoration: 'none' }}>
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01" strokeLinecap="round"/></svg>
+                Mais detalhes
+              </Link>
             </div>
           </div>
-        </div>
+        </section>
       )}
 
-      <div style={{ padding: '40px 48px 0' }}>
-        {series.length > 0 && (
-          <section style={{ marginBottom: 48 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-              <div style={{ width: 3, height: 20, borderRadius: 3, background: 'linear-gradient(to bottom,#6366f1,#8b5cf6)', flexShrink: 0 }} />
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Séries</h2>
-              <span style={{ fontSize: 12, color: 'var(--text-faint)', background: 'var(--surface)', padding: '2px 10px', borderRadius: 20, border: '1px solid var(--surface-border)' }}>{series.length}</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 14 }}>
-              {series.map(t => <TitleCard key={t.id} title={t} />)}
-            </div>
-          </section>
-        )}
-        {movies.length > 0 && (
-          <section style={{ marginBottom: 48 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
-              <div style={{ width: 3, height: 20, borderRadius: 3, background: 'linear-gradient(to bottom,#6366f1,#8b5cf6)', flexShrink: 0 }} />
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Filmes</h2>
-              <span style={{ fontSize: 12, color: 'var(--text-faint)', background: 'var(--surface)', padding: '2px 10px', borderRadius: 20, border: '1px solid var(--surface-border)' }}>{movies.length}</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 14 }}>
-              {movies.map(t => <TitleCard key={t.id} title={t} />)}
-            </div>
-          </section>
-        )}
+      <div className="rows-container" style={{ paddingBottom: 64, marginTop: featuredTitles.length ? -36 : 80, position: 'relative', zIndex: 2 }}>
+        {visibleTitles.length > 0 && <Row label="Em Alta" titles={visibleTitles.slice(0, 10)} />}
+        {visibleTitles.length > 0 && <Row label="Top 10 no Brasil" titles={visibleTitles.slice(0, 10)} showRank />}
+        <Row label="Lançamentos" titles={recent} />
+        <Row label="Recomendados para Você" titles={recommended} />
+        {series.length > 0 && <Row label="Séries" titles={series} />}
+        {movies.length > 0 && <Row label="Filmes" titles={movies} />}
+        {genreRows.map(({ genre, titles: gt }) => (
+          <Row key={genre} label={genre} titles={gt} href={`/pesquisar?genero=${encodeURIComponent(genre)}`} />
+        ))}
         {visibleTitles.length === 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 20px' }}>
-            <p style={{ fontSize: 14, color: 'var(--text-faint)' }}>Nenhum título encontrado.</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 320 }}>
+            <p style={{ fontSize: 15, color: 'var(--text-faint)' }}>Nenhum título cadastrado</p>
           </div>
         )}
       </div>
-    </main>
+
+      <style>{`
+        .hero-section {
+          height: 85vh;
+          min-height: 500px;
+        }
+        .hero-content {
+          left: 52px;
+          max-width: 500px;
+        }
+        .hero-title {
+          font-size: 54px;
+        }
+        .hero-description {
+          max-width: 420px;
+        }
+        .row-header {
+          padding: 0 48px;
+        }
+        .row-scroll {
+          padding-left: 48px;
+          padding-right: 48px;
+        }
+        .row-card {
+          width: 152px;
+        }
+        .row-card-rank {
+          width: 152px;
+        }
+
+        @media (max-width: 768px) {
+          .hero-section {
+            height: 70vh;
+            min-height: 400px;
+          }
+          .hero-content {
+            left: 20px;
+            right: 20px;
+            max-width: none;
+            bottom: 60px;
+          }
+          .hero-title {
+            font-size: 28px;
+            letter-spacing: -0.5px;
+          }
+          .hero-description {
+            font-size: 13px;
+            max-width: none;
+            -webkit-line-clamp: 2;
+          }
+          .hero-genres {
+            display: none !important;
+          }
+          .hero-buttons {
+            flex-direction: column;
+            gap: 8px;
+          }
+          .hero-buttons a {
+            width: 100%;
+            justify-content: center;
+            padding: 10px 20px !important;
+            font-size: 14px !important;
+          }
+          .hero-nav-btn {
+            display: none !important;
+          }
+          .hero-dots {
+            bottom: 12px !important;
+          }
+          .row-header {
+            padding: 0 16px !important;
+          }
+          .row-scroll {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            gap: 8px !important;
+          }
+          .row-card {
+            width: 120px !important;
+          }
+          .row-card-rank {
+            width: 170px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .hero-section {
+            height: 60vh;
+            min-height: 350px;
+          }
+          .hero-title {
+            font-size: 24px;
+          }
+          .row-card {
+            width: 110px !important;
+          }
+          .row-card-rank {
+            width: 170px !important;
+          }
+        }
+      `}</style>
+    </div>
   )
 }

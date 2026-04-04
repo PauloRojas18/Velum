@@ -30,9 +30,8 @@ export default function ProfilePage() {
   const router = useRouter()
   const [user] = useState<User | null>(getUserFromStorage)
   const [history, setHistory] = useState<HistoryItem[]>([])
-  const [loading, setLoading] = useState(!!getUserFromStorage()) // ✅ true se tem user, false se não tem
+  const [loading, setLoading] = useState(!!getUserFromStorage())
 
-  // ✅ loadHistory só chama setState dentro do .then() — assíncrono, permitido
   const loadHistory = useCallback((userId: number) => {
     supabase
       .from('watch_progress')
@@ -59,15 +58,15 @@ export default function ProfilePage() {
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', paddingTop: 64 }}>
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '40px 48px 64px' }}>
+      <div className="perfil-container" style={{ maxWidth: 900, margin: '0 auto' }}>
 
         {/* Profile card */}
-        <div style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 28, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' as const }}>
+        <div className="profile-card" style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 28, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' as const }}>
           <div style={{ width: 80, height: 80, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 800, textTransform: 'uppercase' as const, flexShrink: 0, color: 'white', background: `linear-gradient(135deg,${av},${av}aa)`, boxShadow: `0 8px 32px ${av}40` }}>
             {user.name[0]}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{user.name}</h1>
+            <h1 className="profile-name" style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{user.name}</h1>
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{user.email}</p>
             {user.is_admin && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: '#a78bfa', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', padding: '3px 9px', borderRadius: 6, marginTop: 8 }}>
@@ -76,7 +75,7 @@ export default function ProfilePage() {
               </span>
             )}
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="profile-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <Link href="/configuracoes" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 9, background: 'var(--surface)', border: '1px solid var(--surface-border)', fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', textDecoration: 'none' }}>
               <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
               Configurações
@@ -110,8 +109,8 @@ export default function ProfilePage() {
                 const ep = h.episodes
                 if (!ep) return null
                 return (
-                  <Link key={h.id} href={`/episodio/${ep.id}`} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 12, textDecoration: 'none', transition: 'background 0.2s' }}>
-                    <div style={{ width: 96, height: 54, borderRadius: 8, background: 'var(--card-bg)', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--card-border)' }}>
+                  <Link key={h.id} href={`/episodio/${ep.id}`} className="history-item" style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', background: 'var(--surface-card)', border: '1px solid var(--border-card)', borderRadius: 12, textDecoration: 'none', transition: 'background 0.2s' }}>
+                    <div className="history-thumb" style={{ width: 96, height: 54, borderRadius: 8, background: 'var(--card-bg)', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--card-border)' }}>
                       {ep.thumbnail_url
                         ? <img src={ep.thumbnail_url} alt={ep.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--card-placeholder-bg)', fontSize: 18, fontWeight: 700, color: 'var(--card-placeholder-color)' }}>{ep.episode}</div>
@@ -133,6 +132,56 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      <style>{`
+        .perfil-container {
+          padding: 40px 48px 64px;
+        }
+        .profile-card {
+          flex-direction: row;
+        }
+        .profile-actions {
+          flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+          .perfil-container {
+            padding: 24px 16px 64px;
+          }
+          .profile-card {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 16px !important;
+            padding: 20px !important;
+          }
+          .profile-name {
+            font-size: 20px !important;
+          }
+          .profile-actions {
+            width: 100%;
+          }
+          .profile-actions a,
+          .profile-actions button {
+            flex: 1;
+            justify-content: center;
+          }
+          .history-item {
+            padding: 10px 12px !important;
+            gap: 12px !important;
+          }
+          .history-thumb {
+            width: 72px !important;
+            height: 42px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .history-thumb {
+            width: 60px !important;
+            height: 36px !important;
+          }
+        }
+      `}</style>
     </main>
   )
 }

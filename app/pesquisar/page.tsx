@@ -62,13 +62,13 @@ function PesquisarContent() {
   const hasFilters = query.trim() || selectedGenre
 
   return (
-    <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', paddingTop: 64, paddingBottom: 64, paddingLeft: 40, paddingRight: 40 }}>
+    <main className="pesquisar-main" style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', paddingTop: 64, paddingBottom: 64 }}>
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 30, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Buscar</h1>
+        <h1 className="pesquisar-title" style={{ fontSize: 30, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Buscar</h1>
         <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Encontre seus títulos favoritos</p>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 24, maxWidth: 640 }}>
+      <div className="search-bar" style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
         <div style={{ flex: 1, position: 'relative' }}>
           <svg style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: 'var(--text-muted)', pointerEvents: 'none' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -78,11 +78,11 @@ function PesquisarContent() {
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
             style={{ width: '100%', background: 'var(--surface-input)', border: '1px solid var(--surface-border)', color: 'var(--text-primary)', fontSize: 14, padding: '13px 16px 13px 46px', borderRadius: 12, outline: 'none', fontFamily: 'inherit' }} />
         </div>
-        <button onClick={handleSearch} style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', fontSize: 14, fontWeight: 600, padding: '0 24px', borderRadius: 12, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 90, fontFamily: 'inherit' }}>
+        <button onClick={handleSearch} className="search-btn" style={{ background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', fontSize: 14, fontWeight: 600, padding: '0 24px', borderRadius: 12, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 90, fontFamily: 'inherit' }}>
           Buscar
         </button>
         {hasFilters && (
-          <button onClick={clearFilters} style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontSize: 13, fontWeight: 500, padding: '0 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}>
+          <button onClick={clearFilters} className="clear-btn" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', fontSize: 13, fontWeight: 500, padding: '0 16px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}>
             Limpar
           </button>
         )}
@@ -91,7 +91,7 @@ function PesquisarContent() {
       {allGenres.length > 0 && (
         <div style={{ marginBottom: 36 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-faint)', letterSpacing: 1, textTransform: 'uppercase' as const, marginBottom: 12 }}>Filtrar por gênero</p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
+          <div className="genres-wrap" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' as const }}>
             {allGenres.map(genre => {
               const active = selectedGenre === genre
               return (
@@ -107,14 +107,14 @@ function PesquisarContent() {
 
       {searched && results.length > 0 && (
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
             <div style={{ width: 4, height: 24, borderRadius: 4, background: 'linear-gradient(to bottom,#6366f1,#8b5cf6)', flexShrink: 0 }} />
             <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--text-primary)' }}>{selectedGenre ?? 'Resultados'}</h2>
             <span style={{ fontSize: 13, color: 'var(--text-muted)', background: 'var(--surface)', padding: '3px 12px', borderRadius: 8, border: '1px solid var(--surface-border)' }}>
               {results.length} título{results.length !== 1 ? 's' : ''}
             </span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(140px,1fr))', gap: 16 }}>
+          <div className="results-grid" style={{ display: 'grid', gap: 16 }}>
             {results.map(t => <TitleCard key={t.id} title={t} />)}
           </div>
         </div>
@@ -139,6 +139,60 @@ function PesquisarContent() {
           <p style={{ fontSize: 14, color: 'var(--text-muted)', textAlign: 'center' }}>Digite um nome ou selecione um gênero</p>
         </div>
       )}
+
+      <style>{`
+        .pesquisar-main {
+          padding-left: 40px;
+          padding-right: 40px;
+        }
+        .search-bar {
+          max-width: 640px;
+        }
+        .results-grid {
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+
+        @media (max-width: 768px) {
+          .pesquisar-main {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+          .pesquisar-title {
+            font-size: 24px !important;
+          }
+          .search-bar {
+            flex-wrap: wrap;
+            max-width: none;
+          }
+          .search-bar > div:first-child {
+            flex: 1 1 100%;
+            min-width: 0;
+          }
+          .search-btn {
+            flex: 1;
+          }
+          .clear-btn {
+            flex: 0 0 auto;
+          }
+          .genres-wrap {
+            gap: 6px !important;
+          }
+          .genres-wrap button {
+            font-size: 12px !important;
+            padding: 6px 12px !important;
+          }
+          .results-grid {
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)) !important;
+            gap: 10px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .results-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
+          }
+        }
+      `}</style>
     </main>
   )
 }
