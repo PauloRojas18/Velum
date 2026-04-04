@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={inter.variable}>
+    <html lang="pt-BR" className={inter.variable} data-theme="dark">
       <body style={{ background: 'var(--bg)', color: 'var(--text-primary)', fontFamily: "var(--font-sans,'Inter',system-ui,sans-serif)", minHeight: '100vh' }}>
         {/* Aplica data-theme ANTES do primeiro paint — sem flash, sem warning */}
         <Script id="theme-init" strategy="beforeInteractive">{`

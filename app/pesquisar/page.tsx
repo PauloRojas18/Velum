@@ -7,13 +7,14 @@ import TitleCard from '@/components/TitleCard'
 type Title = {
   id: number; name: string; type: string; cover_url: string | null
   year: number | null; total_seasons: number | null; total_episodes: number | null
-  genres?: string[] | null
+  genres?: string[] | null; admin_only?: boolean | null
 }
 
 export default function PesquisarPage() {
   const searchParams = useSearchParams()
   const [query, setQuery] = useState('')
   const [allTitles, setAllTitles] = useState<Title[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
   const [results, setResults] = useState<Title[]>([])
   const [searched, setSearched] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -21,13 +22,24 @@ export default function PesquisarPage() {
   const [allGenres, setAllGenres] = useState<string[]>([])
 
   useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') ?? '{}')
+      setIsAdmin(user?.is_admin === true)
+    } catch {}
+
     supabase.from('titles').select('*').order('name').then(({ data }) => {
       const titles = (data ?? []) as Title[]
       setAllTitles(titles)
-      const genres = Array.from(new Set(titles.flatMap(t => t.genres ?? []))).filter(Boolean).sort()
-      setAllGenres(genres)
     })
   }, [])
+
+  // Títulos visíveis considerando admin
+  const visibleTitles = allTitles.filter(t => isAdmin || !t.admin_only)
+
+  useEffect(() => {
+    const genres = Array.from(new Set(visibleTitles.flatMap(t => t.genres ?? []))).filter(Boolean).sort()
+    setAllGenres(genres)
+  }, [allTitles, isAdmin])
 
   useEffect(() => {
     const g = searchParams.get('genero')
@@ -35,12 +47,12 @@ export default function PesquisarPage() {
   }, [searchParams])
 
   const applyFilters = useCallback(() => {
-    let filtered = allTitles
+    let filtered = visibleTitles
     if (query.trim()) filtered = filtered.filter(t => t.name.toLowerCase().includes(query.trim().toLowerCase()))
     if (selectedGenre) filtered = filtered.filter(t => t.genres?.includes(selectedGenre))
     setResults(filtered)
     setSearched(true)
-  }, [allTitles, query, selectedGenre])
+  }, [allTitles, isAdmin, query, selectedGenre])
 
   useEffect(() => {
     if (selectedGenre !== null || query.trim()) applyFilters()
@@ -87,7 +99,6 @@ export default function PesquisarPage() {
         )}
       </div>
 
-      {/* Chips de gênero */}
       {allGenres.length > 0 && (
         <div style={{ marginBottom: 36 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-faint)', letterSpacing: 1, textTransform: 'uppercase' as const, marginBottom: 12 }}>Filtrar por gênero</p>

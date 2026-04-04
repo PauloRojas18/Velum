@@ -15,80 +15,29 @@ export default function LoginPage() {
 
   async function handleLogin() {
     setLoading(true); setError('')
-    const { data: user, error } = await supabase.from('users').select('*').eq('email',email).eq('password',password).single()
+    const { data: user, error } = await supabase.from('users').select('*').eq('email',email).eq('password',password).single<User>()
     if (error || !user) { setError('Email ou senha incorretos.'); setLoading(false); return }
     localStorage.setItem('user', JSON.stringify(user))
+    document.cookie = `is_admin=${user.is_admin}; path=/; max-age=604800; SameSite=Lax`
     router.push('/')
+  }
+
+  function fillGuest() {
+    setEmail('convidado@email.com')
+    setPassword('12345678')
   }
 
   return (
     <main style={{
-      minHeight: '100vh',
-      position: 'relative',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 16,
-      overflow: 'hidden',
-      // Imagem de fundo
+      minHeight: '100vh', position: 'relative', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', padding: 16, overflow: 'hidden',
       backgroundImage: `url('https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/f562aaf4-5dbb-4603-a32b-6ef6c2230136/dh0w8qv-9d8ee6b2-b41a-4681-ab9b-8a227560dc75.jpg/v1/fill/w_1192,h_670,q_70,strp/the_netflix_login_background__canada__2024___by_logofeveryt_dh0w8qv-pre.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NzIwIiwicGF0aCI6Ii9mL2Y1NjJhYWY0LTVkYmItNDYwMy1hMzJiLTZlZjZjMjIzMDEzNi9kaDB3OHF2LTlkOGVlNmIyLWI0MWEtNDY4MS1hYjliLThhMjI3NTYwZGM3NS5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.FScrpAAFnKqBVKwe2syeiOww6mfH6avq-DRHZ_uFVNw')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
+      backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
     }}>
-      {/* Overlay escuro (filtro) */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.65)', // Ajuste a opacidade conforme desejar
-        zIndex: 0,
-      }} />
-
-      {/* Círculos de blur originais (opcionais – se quiser manter) */}
-      <div style={{
-        position: 'absolute',
-        top: '25%',
-        left: -80,
-        width: 260,
-        height: 260,
-        borderRadius: '50%',
-        background: 'rgba(99,102,241,0.18)',
-        filter: 'blur(60px)',
-        pointerEvents: 'none',
-        zIndex: 1,
-      }} />
-      <div style={{
-        position: 'absolute',
-        bottom: '25%',
-        right: -80,
-        width: 260,
-        height: 260,
-        borderRadius: '50%',
-        background: 'rgba(139,92,246,0.18)',
-        filter: 'blur(60px)',
-        pointerEvents: 'none',
-        zIndex: 1,
-      }} />
-
-      {/* Card de login */}
-      <div style={{
-        width: '100%',
-        maxWidth: 380,
-        background: 'color-mix(in srgb, var(--card) 92%, transparent)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(99,102,241,0.14)',
-        borderRadius: 20,
-        padding: '48px 32px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-        position: 'relative',
-        zIndex: 2,
-        WebkitBackdropFilter: "blur(20px)",
-        transform: 'scale(0.9)',
-        transformOrigin: 'center center',
-      }}>
+      <div style={{position:'absolute',top:0,left:0,width:'100%',height:'100%',backgroundColor:'rgba(0,0,0,0.65)',zIndex:0}} />
+      <div style={{position:'absolute',top:'25%',left:-80,width:260,height:260,borderRadius:'50%',background:'rgba(99,102,241,0.18)',filter:'blur(60px)',pointerEvents:'none',zIndex:1}} />
+      <div style={{position:'absolute',bottom:'25%',right:-80,width:260,height:260,borderRadius:'50%',background:'rgba(139,92,246,0.18)',filter:'blur(60px)',pointerEvents:'none',zIndex:1}} />
+      <div style={{width:'100%',maxWidth:380,background:'color-mix(in srgb, var(--card) 92%, transparent)',backdropFilter:'blur(20px)',border:'1px solid rgba(99,102,241,0.14)',borderRadius:20,padding:'48px 32px',boxShadow:'0 20px 60px rgba(0,0,0,0.5)',position:'relative',zIndex:2,WebkitBackdropFilter:'blur(20px)',transform:'scale(0.9)',transformOrigin:'center center'}}>
         <div style={{width:64,height:64,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 18px'}}>
           <VelumLogo variant='default'/>
         </div>
@@ -105,6 +54,27 @@ export default function LoginPage() {
             <input type="password" placeholder="Sua senha" value={password} onChange={e=>setPassword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleLogin()}
               style={{width:'100%',background:'#1a1a24',border:'1px solid #2a2a3a',color:'white',fontSize:14,padding:'12px 16px',borderRadius:12,outline:'none',fontFamily:'inherit'}} />
           </div>
+
+          {/* Card de acesso como convidado */}
+          <button onClick={fillGuest} style={{display:'flex',alignItems:'center',gap:12,width:'100%',background:'rgba(99,102,241,0.08)',border:'1px dashed rgba(99,102,241,0.35)',borderRadius:12,padding:'12px 14px',cursor:'pointer',textAlign:'left',fontFamily:'inherit'}}>
+            <div style={{width:34,height:34,borderRadius:10,background:'rgba(99,102,241,0.18)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <p style={{fontSize:12,fontWeight:600,color:'#818cf8',margin:0,marginBottom:3}}>Entrar como convidado</p>
+              <p style={{fontSize:11,color:'#6b6b80',margin:0,lineHeight:1.4}}>
+                <span style={{color:'#a1a1b5'}}>convidado@email.com</span>
+                {' · '}
+                <span style={{color:'#a1a1b5'}}>12345678</span>
+              </p>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a4a6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+
           {error && (
             <div style={{display:'flex',alignItems:'center',gap:8,padding:'12px 16px',borderRadius:12,background:'rgba(239,68,68,0.1)',border:'1px solid rgba(239,68,68,0.22)',color:'#f87171',fontSize:13}}>
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>

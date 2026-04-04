@@ -9,6 +9,7 @@ type Title = {
   id: number; name: string; type: string; cover_url: string | null
   year: number | null; total_seasons: number | null; total_episodes: number | null
   featured?: boolean | null; description?: string | null; genres?: string[] | null
+  admin_only?: boolean | null
 }
 
 function Row({ label, titles, href }: { label: string; titles: Title[]; href?: string }) {
@@ -36,16 +37,25 @@ function Row({ label, titles, href }: { label: string; titles: Title[]; href?: s
 
 export default function HomePage() {
   const [titles, setTitles] = useState<Title[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
 
   useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') ?? '{}')
+      setIsAdmin(user?.is_admin === true)
+    } catch {}
+
     supabase.from('titles').select('*').order('name').then(({ data }) => {
       setTitles((data ?? []) as Title[])
     })
   }, [])
 
-  const featuredTitles = titles.filter(t => t.cover_url).slice(0, 5)
+  // Filtra títulos admin_only se não for admin
+  const visibleTitles = titles.filter(t => isAdmin || !t.admin_only)
+
+  const featuredTitles = visibleTitles.filter(t => t.cover_url).slice(0, 5)
   const current = featuredTitles[currentHeroIndex]
 
   const goToNext = useCallback(() => {
@@ -62,12 +72,12 @@ export default function HomePage() {
     return () => clearInterval(interval)
   }, [isHovering, goToNext, featuredTitles.length])
 
-  const series = titles.filter(t => t.type === 'series')
-  const movies = titles.filter(t => t.type === 'movie')
+  const series = visibleTitles.filter(t => t.type === 'series')
+  const movies = visibleTitles.filter(t => t.type === 'movie')
 
-  const allGenres = Array.from(new Set(titles.flatMap(t => t.genres ?? []))).filter(Boolean).sort()
+  const allGenres = Array.from(new Set(visibleTitles.flatMap(t => t.genres ?? []))).filter(Boolean).sort()
   const genreRows = allGenres
-    .map(genre => ({ genre, titles: titles.filter(t => t.genres?.includes(genre)) }))
+    .map(genre => ({ genre, titles: visibleTitles.filter(t => t.genres?.includes(genre)) }))
     .filter(g => g.titles.length >= 2)
 
   return (
@@ -148,13 +158,13 @@ export default function HomePage() {
 
       {/* ROWS */}
       <div style={{ paddingBottom: 64, marginTop: featuredTitles.length ? -36 : 80, position: 'relative', zIndex: 2 }}>
-        {titles.length > 0 && <Row label="Novidades" titles={titles.slice(0, 10)} />}
+        {visibleTitles.length > 0 && <Row label="Novidades" titles={visibleTitles.slice(0, 10)} />}
         {series.length > 0 && <Row label="Séries" titles={series} />}
         {movies.length > 0 && <Row label="Filmes" titles={movies} />}
         {genreRows.map(({ genre, titles: gt }) => (
           <Row key={genre} label={genre} titles={gt} href={`/pesquisar?genero=${encodeURIComponent(genre)}`} />
         ))}
-        {titles.length === 0 && (
+        {visibleTitles.length === 0 && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 320 }}>
             <p style={{ fontSize: 15, color: 'var(--text-faint)' }}>Nenhum título cadastrado</p>
           </div>

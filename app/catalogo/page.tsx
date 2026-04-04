@@ -9,25 +9,35 @@ type Title = {
   id: number; name: string; type: string; cover_url: string | null
   year: number | null; total_seasons: number | null; total_episodes: number | null
   description?: string | null; featured?: boolean | null; genres?: string[] | null
+  admin_only?: boolean | null
 }
 
 export default function CatalogoPage() {
   const [titles, setTitles] = useState<Title[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
   const [spotlightIndex, setSpotlightIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') ?? '{}')
+      setIsAdmin(user?.is_admin === true)
+    } catch {}
+
     supabase.from('titles').select('*').order('name').then(({ data }) => {
       setTitles((data ?? []) as Title[])
       setLoaded(true)
     })
   }, [])
 
-  const featured = titles.filter(t => t.featured)
-  const spotlight = (featured.length > 0 ? featured : titles.filter(t => t.cover_url)).slice(0, 8)
-  const series = titles.filter(t => t.type === 'series')
-  const movies = titles.filter(t => t.type === 'movie')
+  // Filtra títulos admin_only se não for admin
+  const visibleTitles = titles.filter(t => isAdmin || !t.admin_only)
+
+  const featured = visibleTitles.filter(t => t.featured)
+  const spotlight = (featured.length > 0 ? featured : visibleTitles.filter(t => t.cover_url)).slice(0, 8)
+  const series = visibleTitles.filter(t => t.type === 'series')
+  const movies = visibleTitles.filter(t => t.type === 'movie')
   const current = spotlight[spotlightIndex]
 
   const goToNext = useCallback(() => {
@@ -147,7 +157,7 @@ export default function CatalogoPage() {
             </div>
           </section>
         )}
-        {titles.length === 0 && (
+        {visibleTitles.length === 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '80px 20px' }}>
             <p style={{ fontSize: 14, color: 'var(--text-faint)' }}>Nenhum título encontrado.</p>
           </div>
