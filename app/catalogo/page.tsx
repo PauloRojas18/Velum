@@ -3,7 +3,7 @@
 import { supabase } from '@/lib/supabase'
 import TitleCard from '@/components/TitleCard'
 import Link from 'next/link'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 
 type Title = {
   id: number; name: string; type: string; cover_url: string | null
@@ -12,47 +12,49 @@ type Title = {
   admin_only?: boolean | null
 }
 
+function getIsAdminFromStorage(): boolean {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') ?? '{}')
+    return user?.is_admin === true
+  } catch {
+    return false
+  }
+}
+
 export default function CatalogoPage() {
   const [titles, setTitles] = useState<Title[]>([])
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [isAdmin] = useState<boolean>(getIsAdminFromStorage)
   const [spotlightIndex, setSpotlightIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    try {
-      const user = JSON.parse(localStorage.getItem('user') ?? '{}')
-      setIsAdmin(user?.is_admin === true)
-    } catch {}
-
     supabase.from('titles').select('*').order('name').then(({ data }) => {
       setTitles((data ?? []) as Title[])
       setLoaded(true)
     })
   }, [])
 
-  // Filtra títulos admin_only se não for admin
   const visibleTitles = titles.filter(t => isAdmin || !t.admin_only)
-
   const featured = visibleTitles.filter(t => t.featured)
-  const spotlight = (featured.length > 0 ? featured : visibleTitles.filter(t => t.cover_url)).slice(0, 8)
+  const spotlight = (featured.length > 0 ? featured : visibleTitles.filter(t => t.cover_url)).slice(0, 5)
   const series = visibleTitles.filter(t => t.type === 'series')
   const movies = visibleTitles.filter(t => t.type === 'movie')
   const current = spotlight[spotlightIndex]
 
-  const goToNext = useCallback(() => {
+  function goToNext() {
     setSpotlightIndex(prev => (prev + 1) % spotlight.length)
-  }, [spotlight.length])
+  }
 
-  const goToPrev = useCallback(() => {
+  function goToPrev() {
     setSpotlightIndex(prev => (prev - 1 + spotlight.length) % spotlight.length)
-  }, [spotlight.length])
+  }
 
   useEffect(() => {
     if (isHovering || spotlight.length === 0) return
     const interval = setInterval(goToNext, 3000)
     return () => clearInterval(interval)
-  }, [isHovering, goToNext, spotlight.length])
+  }, [isHovering, spotlight.length, spotlightIndex])
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', paddingBottom: 64, paddingTop: 64 }}>
@@ -62,7 +64,6 @@ export default function CatalogoPage() {
         <p style={{ fontSize: 14, color: 'var(--text-faint)' }}>Explore todos os títulos disponíveis</p>
       </div>
 
-      {/* SPOTLIGHT ROTATIVO */}
       {loaded && spotlight.length > 0 && current && (
         <div style={{ marginTop: 32, position: 'relative' }}
           onMouseEnter={() => setIsHovering(true)}
@@ -81,7 +82,7 @@ export default function CatalogoPage() {
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
             </button>
 
-            <div style={{ display: 'flex', gap: 16, padding: '4px 48px 20px', overflowX: 'auto', scrollbarWidth: 'none' as const, alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', padding: '4px 48px 20px', overflowX: 'auto', scrollbarWidth: 'none' as const, alignItems: 'flex-end' }}>
               {spotlight.map((t, i) => {
                 const isActive = i === spotlightIndex
                 return (
@@ -131,7 +132,6 @@ export default function CatalogoPage() {
         </div>
       )}
 
-      {/* Grids */}
       <div style={{ padding: '40px 48px 0' }}>
         {series.length > 0 && (
           <section style={{ marginBottom: 48 }}>

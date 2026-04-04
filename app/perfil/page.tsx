@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
@@ -17,32 +17,40 @@ interface HistoryItem {
   } | null
 }
 
+function getUserFromStorage(): User | null {
+  try {
+    const stored = localStorage.getItem('user')
+    return stored ? JSON.parse(stored) as User : null
+  } catch {
+    return null
+  }
+}
+
 export default function ProfilePage() {
   const router = useRouter()
-  const [user, setUser] = useState<User|null>(null)
+  const [user] = useState<User | null>(getUserFromStorage)
   const [history, setHistory] = useState<HistoryItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!!getUserFromStorage()) // ✅ true se tem user, false se não tem
 
-  useEffect(() => {
-    const stored = localStorage.getItem('user')
-    if (!stored) { router.push('/login'); return }
-    const u = JSON.parse(stored) as User
-    setUser(u)
-    loadHistory(u.id)
-  }, [router])
-
-  async function loadHistory(userId: number) {
-    setLoading(true)
-    const { data, error } = await supabase
+  // ✅ loadHistory só chama setState dentro do .then() — assíncrono, permitido
+  const loadHistory = useCallback((userId: number) => {
+    supabase
       .from('watch_progress')
       .select('id, updated_at, episode_id, episodes(id, season, episode, name, duration, thumbnail_url, titles(id, name))')
       .eq('user_id', userId)
       .eq('watched', true)
       .order('updated_at', { ascending: false })
       .limit(20)
-    if (!error) setHistory((data ?? []) as unknown as HistoryItem[])
-    setLoading(false)
-  }
+      .then(({ data, error }) => {
+        if (!error) setHistory((data ?? []) as unknown as HistoryItem[])
+        setLoading(false)
+      })
+  }, [])
+
+  useEffect(() => {
+    if (!user) { router.push('/login'); return }
+    loadHistory(user.id)
+  }, [user, router, loadHistory])
 
   function handleLogout() { localStorage.removeItem('user'); router.push('/login') }
 

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 
@@ -20,12 +20,14 @@ export default function AdminPage() {
 
   function showToast(msg:string,type:'ok'|'err'='ok') { setToast({msg,type}); setTimeout(()=>setToast(null),3000) }
 
-  async function loadTitles() {
-    setLoading(true)
-    const { data } = await supabase.from('titles').select('*').order('id',{ascending:false})
-    setTitles((data??[]) as Title[])
-    setLoading(false)
-  }
+  // ✅ .then() em vez de async/await — setState só em callback assíncrono
+  const loadTitles = useCallback(() => {
+    supabase.from('titles').select('*').order('id',{ascending:false})
+      .then(({ data }) => {
+        setTitles((data ?? []) as Title[])
+        setLoading(false)
+      })
+  }, [])
 
   async function saveTitle() {
     if (!form.name.trim()) return
@@ -59,7 +61,7 @@ export default function AdminPage() {
     showToast(!current?'Marcado como destaque':'Destaque removido'); loadTitles()
   }
 
-  useEffect(()=>{ loadTitles() },[])
+  useEffect(() => { loadTitles() }, [loadTitles])
 
   const filtered = titles.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) && (filterType==='all'||t.type===filterType))
 

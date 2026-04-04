@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useLayoutEffect } from 'react'
+import { useState, useLayoutEffect, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
@@ -11,34 +11,49 @@ const COLORS: ThemeColor[] = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e
 
 type AppTheme = 'dark' | 'light'
 
+function getProfileFromStorage() {
+  try {
+    const stored = localStorage.getItem('user')
+    if (!stored) return null
+    const u = JSON.parse(stored) as User
+    return {
+      user: u,
+      name: u.name,
+      color: (COLORS.includes(u.avatar_color as ThemeColor) ? u.avatar_color : COLORS[0]) as ThemeColor,
+    }
+  } catch {
+    return null
+  }
+}
+
+function getThemeFromStorage(): AppTheme {
+  try {
+    return (localStorage.getItem('theme') ?? 'dark') as AppTheme
+  } catch {
+    return 'dark'
+  }
+}
+
 export default function SettingsPage() {
   const router = useRouter()
 
-  const [profile, setProfile] = useState<{ user: User; name: string; color: ThemeColor } | null>(null)
+  const [profile, setProfile] = useState<{ user: User; name: string; color: ThemeColor } | null>(getProfileFromStorage)
+  const [theme, setTheme] = useState<AppTheme>(getThemeFromStorage)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
-  // null = ainda não leu o localStorage (evita sobrescrever o tema na montagem)
-  const [theme, setTheme] = useState<AppTheme | null>(null)
 
-  useEffect(() => {
-    const stored = localStorage.getItem('user')
-    if (!stored) { router.push('/login'); return }
-    const u = JSON.parse(stored) as User
-    const savedTheme = (localStorage.getItem('theme') ?? 'dark') as AppTheme
-    setProfile({
-      user: u,
-      name: u.name,
-      color: (COLORS.includes(u.avatar_color as ThemeColor) ? u.avatar_color : COLORS[0]) as ThemeColor
-    })
-    setTheme(savedTheme)
-  }, [router])
-
-  // Só aplica o tema quando ele foi explicitamente carregado/alterado (não no mount com valor padrão)
   useLayoutEffect(() => {
-    if (theme === null) return
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  useEffect(() => {
+    if (!profile) {
+      router.push('/login')
+    }
+  }, [profile, router])
+
+  if (!profile) return null
 
   async function handleSave() {
     if (!profile) return
@@ -58,7 +73,6 @@ export default function SettingsPage() {
     setSaving(false)
   }
 
-  if (!profile || theme === null) return null
   const { user, name, color } = profile
 
   return (
@@ -75,7 +89,6 @@ export default function SettingsPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ maxWidth: 520 }}>
-              {/* Informações pessoais */}
               <div style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 18 }}>
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#6366f1"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -95,7 +108,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Cor do avatar */}
               <div style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 18 }}>
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#8b5cf6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
@@ -114,7 +126,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Tema */}
               <div style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 24, marginBottom: 24 }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 18 }}>
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#a78bfa"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
@@ -151,7 +162,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Salvar */}
               <button onClick={handleSave} disabled={saving}
                 style={{ width: '100%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', color: 'white', fontSize: 14, fontWeight: 600, padding: '14px 24px', borderRadius: 12, border: 'none', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1, boxShadow: '0 4px 20px rgba(99,102,241,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'inherit' }}>
                 {saving
