@@ -40,7 +40,7 @@ export default function ProfilePage() {
       .eq('watched', true)
       .order('updated_at', { ascending: false })
       .limit(20)
-    if (!error) setHistory((data ?? []) as HistoryItem[])
+    if (!error) setHistory((data ?? []) as unknown as HistoryItem[])
     setLoading(false)
   }
 
