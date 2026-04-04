@@ -10,6 +10,7 @@ type Title = {
   year: number | null; total_seasons: number | null; total_episodes: number | null
   featured?: boolean | null; description?: string | null; genres?: string[] | null
   admin_only?: boolean | null
+  created_at?: string
 }
 
 function Row({ label, titles, href, showRank = false }: { 
@@ -76,7 +77,7 @@ export default function CatalogoPage() {
       setIsAdmin(user?.is_admin === true)
     } catch {}
 
-    supabase.from('titles').select('*').order('name').then(({ data }) => {
+    supabase.from('titles').select('*').order('created_at', { ascending: false }).then(({ data }) => {
       setTitles((data ?? []) as Title[])
     })
   }, [])
