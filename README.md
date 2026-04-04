@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎬 Velum — Plataforma de Streaming
 
-## Getting Started
+**Velum** é uma plataforma de streaming de vídeos construída com Next.js 15, com autenticação JWT, painel administrativo e reprodução de episódios via Google Drive.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## ✨ Funcionalidades
+
+- **Autenticação segura** — login com JWT (jose) e senhas com bcrypt
+- **Catálogo de títulos** — listagem e busca de séries/filmes
+- **Player de episódios** — reprodução integrada via Google Drive
+- **Seleção de temporadas** — navegação entre temporadas e episódios
+- **Pesquisa** — busca de títulos no catálogo
+- **Painel admin** — gerenciamento de títulos e episódios
+- **Perfil de usuário** — configurações de conta
+- **Tema claro/escuro** — toggle de tema persistido
+
+---
+
+## 🛠️ Stack Tecnológica
+
+| Camada | Tecnologia |
+|--------|-----------|
+| Framework | Next.js 16 + React 19 |
+| Linguagem | TypeScript |
+| Banco de dados | Supabase (PostgreSQL) |
+| Autenticação | JWT (jose) + bcryptjs |
+| Estilização | Tailwind CSS v4 |
+| Player | Google Drive Embed |
+| Hospedagem | Vercel |
+
+---
+
+## 📁 Estrutura do Projeto
+
+```
+app/
+├── home/             # Página inicial com destaques
+├── catalogo/         # Catálogo completo de títulos
+├── titulo/[id]/      # Página de um título (temporadas + episódios)
+├── episodio/[id]/    # Player do episódio
+├── pesquisar/        # Busca no catálogo
+├── perfil/           # Perfil do usuário
+├── configuracoes/    # Configurações de conta
+├── admin/            # Painel administrativo
+└── login/            # Autenticação
+components/
+├── Navbar / Sidebar  # Navegação
+├── TitleCard / TitleRow  # Cards de título
+├── EpisodeCard       # Card de episódio
+├── SeasonSelect      # Seletor de temporada
+├── VideoPlayerr      # Player de vídeo
+└── DrivePlayer       # Integração Google Drive
+lib/
+├── auth.ts           # Lógica de autenticação JWT
+└── supabase.ts       # Cliente Supabase
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📚 Aprendizados
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Implementar autenticação stateless do zero com **JWT (jose)** e **bcryptjs**, sem depender de bibliotecas como NextAuth — gerenciando cookies HttpOnly e verificação de token em middleware
+- Integrar o **Google Drive como CDN de vídeo**, descobrindo como construir a URL de embed correta e lidar com restrições de iframe
+- Trabalhar com **Supabase** para armazenar catálogo, episódios e usuários, aproveitando as Row Level Security policies para proteger dados por usuário
+- Construir um painel admin funcional que permite gerenciar títulos e episódios sem ferramentas externas de CMS
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 👤 Autor
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Paulo Otávio Câmara Rojas**  
+[GitHub](https://github.com/PauloRojas18) • [LinkedIn](https://linkedin.com/in/paulo-rojas-b7b77a3a1/) • paulootaviogalala@gmail.com
