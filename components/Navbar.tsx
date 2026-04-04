@@ -7,7 +7,7 @@ import VelumLogo from './VelumLogo'
 interface User { name: string; email: string; avatar_color: string | null; is_admin: boolean }
 
 const NAV_LINKS = [
-  { href: '/', label: 'Início' },
+  { href: '/home', label: 'Início' },
   { href: '/catalogo', label: 'Catálogo' },
   { href: '/pesquisar', label: 'Buscar' },
 ]
@@ -46,7 +46,7 @@ export default function Navbar() {
   if (pathname === '/login') return null
 
   const av = user?.avatar_color ?? '#6366f1'
-  const isHome = pathname === '/'
+  const isHome = pathname === '/home'
   const solid = scrolled || !isHome
 
   return (
@@ -60,7 +60,7 @@ export default function Navbar() {
       borderBottom: solid ? '1px solid var(--nav-border)' : 'none',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginRight: 36 }}>
+        <Link href="/home" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginRight: 36 }}>
           <div style={{ width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <VelumLogo variant={theme === 'light' ? 'mono' : 'default'} size={38} />
           </div>
