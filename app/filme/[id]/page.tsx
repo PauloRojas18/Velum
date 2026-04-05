@@ -32,6 +32,7 @@ type SimilarTitle = {
   year: number | null;
   total_seasons: number | null;
   total_episodes: number | null;
+  admin_only?: boolean | null;
 };
 
 export default async function FilmePage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,8 +53,6 @@ export default async function FilmePage({ params }: { params: Promise<{ id: stri
     .eq('id', movie.title_id)
     .single<Title>();
 
-    console.log('>>> title:', title, '| isAdmin:', isAdmin);
-
   if (!title) notFound();
   if (title.admin_only && !isAdmin) notFound();
 
@@ -64,8 +63,8 @@ export default async function FilmePage({ params }: { params: Promise<{ id: stri
     .neq('id', title.id)
     .limit(8);
 
-  const typedSimilar = ((similar ?? []) as SimilarTitle[]).filter(
-    (t: any) => isAdmin || !t.admin_only
+  const typedSimilar = ((similar ?? []) as (SimilarTitle & { admin_only?: boolean | null })[]).filter(
+    (t) => isAdmin || !t.admin_only
   );
 
   const movieAsEpisode = {
