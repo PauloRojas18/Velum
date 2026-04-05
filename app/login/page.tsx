@@ -18,7 +18,7 @@ export default function LoginPage() {
     const { data: user, error } = await supabase.from('users').select('*').eq('email',email).eq('password',password).single<User>()
     if (error || !user) { setError('Email ou senha incorretos.'); setLoading(false); return }
     localStorage.setItem('user', JSON.stringify(user))
-    document.cookie = `is_admin=${user.is_admin}; path=/home; max-age=604800; SameSite=Lax`
+    document.cookie = `is_admin=${user.is_admin}; path=/; max-age=604800; SameSite=Lax`
     router.push('/home')
   }
 
