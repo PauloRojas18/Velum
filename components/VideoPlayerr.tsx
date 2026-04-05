@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 type Episode = {
   id: number;
@@ -16,9 +17,28 @@ type Props = {
   nextEpisode?: Episode | null;
 };
 
+function saveProgress(episodeId: number) {
+  try {
+    const stored = localStorage.getItem('user');
+    if (!stored) return;
+    const user = JSON.parse(stored);
+    supabase
+      .from('watch_progress')
+      .upsert(
+        { user_id: user.id, episode_id: episodeId, watched: true, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,episode_id' }
+      )
+      .then(() => {})
+  } catch {}
+}
+
 export default function VideoPlayer({ episode, nextEpisode }: Props) {
   const isR2 = episode.storage === 'r2';
   const videoUrl = isR2 ? episode.file_id : '';
+
+  useEffect(() => {
+    saveProgress(episode.id);
+  }, [episode.id]);
 
   // Google Drive (iframe)
   if (!isR2) {
