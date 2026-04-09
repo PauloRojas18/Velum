@@ -8,7 +8,7 @@ import Image from 'next/image'
 
 interface User { id:number; name:string; email:string; avatar_color:string|null; is_admin:boolean }
 
-interface Profile { id:number; name:string; avatar_color:string|null; avatars?: string[] }
+interface Profile { id:number; name:string; avatar_color:string|null; avatars?: { id:number; image_url:string }[] | null }
 
 export default function SelPerfil() {
     const router = useRouter()
@@ -71,7 +71,7 @@ export default function SelPerfil() {
                                 </div>
                                 )}
                                 <Image
-                                src={p.avatars?.image_url}
+                                src={p.avatars?.[0]?.image_url ?? ''}
                                 alt={p.name}
                                 width={120}
                                 height={120}
