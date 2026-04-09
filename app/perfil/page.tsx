@@ -11,7 +11,7 @@ interface Profile {
   id: number
   name: string
   avatar_color: string | null
-  avatars?: { id: number; image_url: string }[] | null
+  avatars?: { id: number; image_url: string } | null
 }
 
 interface HistoryItem {
@@ -40,6 +40,7 @@ export default function ProfilePage() {
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(!!getUserFromStorage())
   const [profiles, setProfiles] = useState<Profile[]>([])
+
   const loadHistory = useCallback((userId: number) => {
     supabase
       .from('watch_progress')
@@ -56,22 +57,18 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const load = async () => {
-        try{
-            const s = localStorage.getItem('user')
-
-            if(!s) return
-
-            const parsedUser: User = JSON.parse(s)
-
-            const { data } = await supabase.from('profiles').select('*, avatars(id,image_url)').eq('user_id', parsedUser.id)
-
-            if (data) setProfiles(data) }catch(e){
-                console.error('Error loading profiles:', e)
-        }
-    }       
+      try {
+        const s = localStorage.getItem('user')
+        if (!s) return
+        const parsedUser: User = JSON.parse(s)
+        const { data } = await supabase.from('profiles').select('*, avatars(id,image_url)').eq('user_id', parsedUser.id)
+        if (data) setProfiles(data)
+      } catch(e) {
+        console.error('Error loading profiles:', e)
+      }
+    }
     if (!user) { router.push('/login'); return }
     loadHistory(user.id)
-
     load()
   }, [user, router, loadHistory])
 
@@ -87,14 +84,26 @@ export default function ProfilePage() {
         {/* Profile card */}
         <div className="profile-card" style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 28, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' as const }}>
           {profiles.map((p) => (
-          <div key={p.id} style={{ width: 80, height: 80, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 800, textTransform: 'uppercase' as const, flexShrink: 0, color: 'white', background: `linear-gradient(135deg,${av},${av}aa)` }}>
-            <Image 
-            src={p.avatars?.[0]?.image_url ?? ''}
-            alt={p.name}
-            width={80}
-            height={80}
-            style={{ borderRadius: 8, objectFit: 'cover', transition: 'opacity 0.2s' }}/>
-          </div>
+            <div key={p.id} style={{ width: 80, height: 80, borderRadius: 16, flexShrink: 0, overflow: 'hidden' }}>
+              {p.avatars?.image_url ? (
+                <Image
+                  src={p.avatars.image_url}
+                  alt={p.name}
+                  width={80}
+                  height={80}
+                  style={{ borderRadius: 8, objectFit: 'cover', transition: 'opacity 0.2s' }}
+                />
+              ) : (
+                <div style={{
+                  width: 80, height: 80, borderRadius: 16,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 30, fontWeight: 800, textTransform: 'uppercase',
+                  color: 'white', background: `linear-gradient(135deg,${av},${av}aa)`
+                }}>
+                  {p.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
           ))}
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 className="profile-name" style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{user.name}</h1>
@@ -165,52 +174,22 @@ export default function ProfilePage() {
       </div>
 
       <style>{`
-        .perfil-container {
-          padding: 40px 48px 64px;
-        }
-        .profile-card {
-          flex-direction: row;
-        }
-        .profile-actions {
-          flex-shrink: 0;
-        }
+        .perfil-container { padding: 40px 48px 64px; }
+        .profile-card { flex-direction: row; }
+        .profile-actions { flex-shrink: 0; }
 
         @media (max-width: 768px) {
-          .perfil-container {
-            padding: 24px 16px 64px;
-          }
-          .profile-card {
-            flex-direction: column;
-            align-items: flex-start !important;
-            gap: 16px !important;
-            padding: 20px !important;
-          }
-          .profile-name {
-            font-size: 20px !important;
-          }
-          .profile-actions {
-            width: 100%;
-          }
-          .profile-actions a,
-          .profile-actions button {
-            flex: 1;
-            justify-content: center;
-          }
-          .history-item {
-            padding: 10px 12px !important;
-            gap: 12px !important;
-          }
-          .history-thumb {
-            width: 72px !important;
-            height: 42px !important;
-          }
+          .perfil-container { padding: 24px 16px 64px; }
+          .profile-card { flex-direction: column; align-items: flex-start !important; gap: 16px !important; padding: 20px !important; }
+          .profile-name { font-size: 20px !important; }
+          .profile-actions { width: 100%; }
+          .profile-actions a, .profile-actions button { flex: 1; justify-content: center; }
+          .history-item { padding: 10px 12px !important; gap: 12px !important; }
+          .history-thumb { width: 72px !important; height: 42px !important; }
         }
 
         @media (max-width: 480px) {
-          .history-thumb {
-            width: 60px !important;
-            height: 36px !important;
-          }
+          .history-thumb { width: 60px !important; height: 36px !important; }
         }
       `}</style>
     </main>
