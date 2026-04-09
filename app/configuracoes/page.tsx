@@ -3,11 +3,10 @@ import { useState, useLayoutEffect, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface User { id: number; name: string; email: string; avatar_color: string | null; is_admin: boolean }
-
-type ThemeColor = '#6366f1' | '#8b5cf6' | '#06b6d4' | '#10b981' | '#f59e0b' | '#ef4444'
-const COLORS: ThemeColor[] = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444']
+interface Avatar { id: number; image_url: string }
 
 type AppTheme = 'dark' | 'light'
 
@@ -16,31 +15,25 @@ function getProfileFromStorage() {
     const stored = localStorage.getItem('user')
     if (!stored) return null
     const u = JSON.parse(stored) as User
-    return {
-      user: u,
-      name: u.name,
-      color: (COLORS.includes(u.avatar_color as ThemeColor) ? u.avatar_color : COLORS[0]) as ThemeColor,
-    }
-  } catch {
-    return null
-  }
+    return { user: u, name: u.name }
+  } catch { return null }
 }
 
 function getThemeFromStorage(): AppTheme {
-  try {
-    return (localStorage.getItem('theme') ?? 'dark') as AppTheme
-  } catch {
-    return 'dark'
-  }
+  try { return (localStorage.getItem('theme') ?? 'dark') as AppTheme }
+  catch { return 'dark' }
 }
 
 export default function SettingsPage() {
   const router = useRouter()
 
-  const [profile, setProfile] = useState<{ user: User; name: string; color: ThemeColor } | null>(getProfileFromStorage)
+  const [profile, setProfile] = useState<{ user: User; name: string } | null>(getProfileFromStorage)
   const [theme, setTheme] = useState<AppTheme>(getThemeFromStorage)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
+  const [avatars, setAvatars] = useState<Avatar[]>([])
+  const [selectedAvatar, setSelectedAvatar] = useState<number | null>(null)
 
   useLayoutEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -48,9 +41,29 @@ export default function SettingsPage() {
   }, [theme])
 
   useEffect(() => {
-    if (!profile) {
-      router.push('/login')
+    if (!profile) { router.push('/login'); return }
+
+    const profileId = localStorage.getItem('profile_id')
+    if (!profileId) return
+
+    const load = async () => {
+      // Avatar atual do perfil
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('avatar_id, avatars(image_url)')
+        .eq('id', Number(profileId))
+        .single()
+
+      if (profileData?.avatar_id) setSelectedAvatar(profileData.avatar_id)
+      const url = (profileData?.avatars as unknown as { image_url: string } | null)?.image_url
+      if (url) setProfileAvatar(url)
+
+      // Lista de todos os avatares disponíveis
+      const { data: avatarList } = await supabase.from('avatars').select('*')
+      if (avatarList) setAvatars(avatarList)
     }
+
+    load()
   }, [profile, router])
 
   if (!profile) return null
@@ -58,12 +71,24 @@ export default function SettingsPage() {
   async function handleSave() {
     if (!profile) return
     setSaving(true)
+
+    // Salva nome na conta
     const { data } = await supabase
       .from('users')
-      .update({ name: profile.name, avatar_color: profile.color })
+      .update({ name: profile.name })
       .eq('id', profile.user.id)
       .select()
       .single()
+
+    // Salva avatar no perfil
+    const profileId = localStorage.getItem('profile_id')
+    if (profileId && selectedAvatar) {
+      await supabase
+        .from('profiles')
+        .update({ avatar_id: selectedAvatar })
+        .eq('id', Number(profileId))
+    }
+
     if (data) {
       localStorage.setItem('user', JSON.stringify(data))
       setProfile(prev => prev ? { ...prev, user: data as User } : prev)
@@ -73,7 +98,7 @@ export default function SettingsPage() {
     setSaving(false)
   }
 
-  const { user, name, color } = profile
+  const { user, name } = profile
 
   return (
     <main className="config-main" style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text-primary)', paddingTop: 80, paddingBottom: 64 }}>
@@ -85,10 +110,12 @@ export default function SettingsPage() {
             </Link>
             <h1 className="config-title" style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)' }}>Configurações</h1>
           </div>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 36, marginLeft: 44 }}>Personalize seu perfil</p>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 36, marginLeft: 44 }}>Personalize sua conta</p>
 
           <div className="config-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div className="config-cards" style={{ maxWidth: 520, width: '100%' }}>
+
+              {/* Informações pessoais */}
               <div style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 18 }}>
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#6366f1"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -97,7 +124,8 @@ export default function SettingsPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>Nome</label>
-                    <input type="text" value={name} onChange={e => setProfile(prev => prev ? { ...prev, name: e.target.value } : prev)}
+                    <input type="text" value={name}
+                      onChange={e => setProfile(prev => prev ? { ...prev, name: e.target.value } : prev)}
                       style={{ width: '100%', background: 'var(--surface-input)', border: '1px solid var(--surface-border)', color: 'var(--text-primary)', fontSize: 14, padding: '12px 16px', borderRadius: 12, outline: 'none', fontFamily: 'inherit' }} />
                   </div>
                   <div>
@@ -108,24 +136,46 @@ export default function SettingsPage() {
                 </div>
               </div>
 
+              {/* Avatar do perfil */}
               <div style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 24, marginBottom: 16 }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 18 }}>
-                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#8b5cf6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
-                  Cor do avatar
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#8b5cf6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Avatar do perfil
                 </h2>
                 <div className="avatar-section" style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-                  <div style={{ width: 64, height: 64, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, fontWeight: 700, textTransform: 'uppercase', flexShrink: 0, color: 'white', background: `linear-gradient(135deg,${color},${color}bb)`, boxShadow: `0 8px 32px ${color}40`, transition: 'all 0.3s' }}>
-                    {name[0] || 'U'}
+                  {/* Preview */}
+                  <div style={{ width: 64, height: 64, borderRadius: 12, flexShrink: 0, overflow: 'hidden', background: 'var(--surface-input)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: selectedAvatar ? '2px solid #6366f1' : '2px solid var(--surface-border)', boxShadow: selectedAvatar ? '0 8px 32px rgba(99,102,241,0.25)' : 'none', transition: 'all 0.3s' }}>
+                    {profileAvatar
+                      ? <Image src={profileAvatar} width={64} height={64} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
+                      : <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="var(--text-muted)">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    }
                   </div>
-                  <div className="color-options" style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    {COLORS.map(c => (
-                      <button key={c} onClick={() => setProfile(prev => prev ? { ...prev, color: c } : prev)}
-                        style={{ width: 40, height: 40, borderRadius: 10, background: `linear-gradient(135deg,${c},${c}bb)`, border: 'none', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s', outline: color === c ? `3px solid ${c}` : 'none', outlineOffset: color === c ? 3 : 0, boxShadow: color === c ? `0 4px 20px ${c}40` : 'none' }} />
+                  {/* Lista de avatares */}
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    {avatars.map((a) => (
+                      <button key={a.id} onClick={() => {
+                        setSelectedAvatar(a.id)
+                        setProfileAvatar(a.image_url)
+                      }} style={{
+                        width: 44, height: 44, borderRadius: 10, padding: 0, border: 'none',
+                        cursor: 'pointer', overflow: 'hidden', background: 'var(--surface-input)',
+                        outline: selectedAvatar === a.id ? '3px solid #6366f1' : '2px solid transparent',
+                        outlineOffset: selectedAvatar === a.id ? 3 : 0,
+                        boxShadow: selectedAvatar === a.id ? '0 4px 20px rgba(99,102,241,0.35)' : 'none',
+                        transition: 'all 0.2s',
+                      }}>
+                        <Image src={a.image_url} priority width={44} height={44} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
+                      </button>
                     ))}
                   </div>
                 </div>
               </div>
 
+              {/* Aparência */}
               <div style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 24, marginBottom: 24 }}>
                 <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 18 }}>
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#a78bfa"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
@@ -145,7 +195,6 @@ export default function SettingsPage() {
                       <span style={{ fontSize: 12, fontWeight: 600, color: theme === 'dark' ? '#818cf8' : 'var(--text-muted)' }}>Escuro</span>
                     </div>
                   </button>
-
                   <button onClick={() => setTheme('light')}
                     style={{ flex: 1, padding: 0, border: theme === 'light' ? '2px solid #6366f1' : '2px solid var(--surface-border)', borderRadius: 12, cursor: 'pointer', background: 'none', boxShadow: theme === 'light' ? '0 0 0 3px rgba(99,102,241,0.18)' : 'none', transition: 'all 0.2s', overflow: 'hidden' }}>
                     <div style={{ background: '#eeeef4', padding: '16px 14px 10px', borderRadius: '10px 10px 0 0' }}>
@@ -170,6 +219,7 @@ export default function SettingsPage() {
                   ? <><svg width="16" height="16" fill="white" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>Salvo!</>
                   : 'Salvar alterações'}
               </button>
+
             </div>
           </div>
         </div>
@@ -177,38 +227,13 @@ export default function SettingsPage() {
 
       <style>{`
         @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        
-        .config-main {
-          padding-left: 40px;
-          padding-right: 40px;
-        }
-
+        .config-main { padding-left: 40px; padding-right: 40px; }
         @media (max-width: 768px) {
-          .config-main {
-            padding-left: 16px !important;
-            padding-right: 16px !important;
-            padding-top: 70px !important;
-          }
-          .config-title {
-            font-size: 22px !important;
-          }
-          .config-cards {
-            max-width: none !important;
-          }
-          .avatar-section {
-            flex-direction: column;
-            align-items: flex-start !important;
-          }
-          .color-options {
-            gap: 10px !important;
-          }
-          .color-options button {
-            width: 36px !important;
-            height: 36px !important;
-          }
-          .theme-options {
-            flex-direction: column;
-          }
+          .config-main { padding-left: 16px !important; padding-right: 16px !important; padding-top: 70px !important; }
+          .config-title { font-size: 22px !important; }
+          .config-cards { max-width: none !important; }
+          .avatar-section { flex-direction: column; align-items: flex-start !important; }
+          .theme-options { flex-direction: column; }
         }
       `}</style>
     </main>

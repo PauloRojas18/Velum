@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import VelumLogo from './VelumLogo'
+import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
 
 interface User { name: string; email: string; avatar_color: string | null; is_admin: boolean }
 
@@ -18,6 +20,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
 
   useEffect(() => {
     try {
@@ -41,12 +44,39 @@ export default function Navbar() {
     return () => observer.disconnect()
   }, [])
 
+  // Troca o useEffect que busca avatars:
+  useEffect(() => {
+    const load = async () => {
+      const s = localStorage.getItem('user')
+      if (!s) return
+      const parsed = JSON.parse(s)
+      setUser(parsed)
+
+      // Busca só o avatar do perfil selecionado
+      const profileId = localStorage.getItem('profile_id')
+      if (!profileId) return
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatars(image_url)')
+        .eq('id', Number(profileId))
+        .single()
+
+      const url = (data?.avatars as unknown as { image_url: string } | null)?.image_url
+      if (url) setProfileAvatar(url)
+    }
+    load()
+  }, [])
+
   // Fecha menu ao navegar
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [pathname])
-
+  
   if (pathname === '/login') return null
+  if (pathname === '/sel_perfil') return null
+  if (pathname === '/sel_perfil/add') return null
+  if (pathname.startsWith('/sel_perfil/edit/')) return null
 
   const av = user?.avatar_color ?? '#6366f1'
   const isHome = pathname === '/home'
@@ -100,8 +130,13 @@ export default function Navbar() {
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
           </Link>
           <Link href="/perfil" style={{ marginLeft: 4, textDecoration: 'none' }}>
-            <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', background: `linear-gradient(135deg,${av},${av}cc)`, boxShadow: `0 0 0 2px var(--bg), 0 0 0 4px ${av}66`, color: 'white' }}>
-              {user?.name?.[0] ?? 'U'}
+            <div style={{ width: 34, height: 34, borderRadius:4, overflow: 'hidden', cursor: 'pointer' }}>
+              {profileAvatar
+                ? <Image src={profileAvatar} width={34} height={34} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', background: `linear-gradient(135deg,${av},${av}cc)`, color: 'white' }}>
+                    {user?.name?.[0] ?? 'U'}
+                  </div>
+              }
             </div>
           </Link>
         </div>
@@ -207,20 +242,14 @@ export default function Navbar() {
             Configurações
           </Link>
           
-          <Link href="/perfil" style={{
-            padding: '14px 16px',
-            borderRadius: 12,
-            fontSize: 16,
-            fontWeight: 500,
-            color: 'var(--text-muted)',
-            background: 'var(--surface)',
-            textDecoration: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-          }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', background: `linear-gradient(135deg,${av},${av}cc)`, color: 'white' }}>
-              {user?.name?.[0] ?? 'U'}
+          <Link href="/perfil" style={{ padding: '14px 16px', borderRadius: 12, fontSize: 16, fontWeight: 500, color: 'var(--text-muted)', background: 'var(--surface)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }}>
+              {profileAvatar
+                ? <Image src={profileAvatar} width={28} height={28} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', background: `linear-gradient(135deg,${av},${av}cc)`, color: 'white' }}>
+                    {user?.name?.[0] ?? 'U'}
+                  </div>
+              }
             </div>
             Meu Perfil
           </Link>

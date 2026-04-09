@@ -19,7 +19,7 @@ export default function LoginPage() {
     if (error || !user) { setError('Email ou senha incorretos.'); setLoading(false); return }
     localStorage.setItem('user', JSON.stringify(user))
     document.cookie = `is_admin=${user.is_admin}; path=/; max-age=604800; SameSite=Lax`
-    router.push('/home')
+    router.push('/sel_perfil')
   }
 
   function fillGuest() {

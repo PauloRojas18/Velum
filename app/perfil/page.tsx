@@ -3,8 +3,11 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface User { id:number; name:string; email:string; avatar_color:string|null; is_admin:boolean }
+
+interface Profile { id:number; name:string; avatar_color:string|null; avatars?: string[] }
 
 interface HistoryItem {
   id: number
@@ -31,7 +34,7 @@ export default function ProfilePage() {
   const [user] = useState<User | null>(getUserFromStorage)
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(!!getUserFromStorage())
-
+  const [profiles, setProfiles] = useState<Profile[]>([])
   const loadHistory = useCallback((userId: number) => {
     supabase
       .from('watch_progress')
@@ -47,8 +50,24 @@ export default function ProfilePage() {
   }, [])
 
   useEffect(() => {
+    const load = async () => {
+        try{
+            const s = localStorage.getItem('user')
+
+            if(!s) return
+
+            const parsedUser: User = JSON.parse(s)
+
+            const { data } = await supabase.from('profiles').select('*, avatars(id,image_url)').eq('user_id', parsedUser.id)
+
+            if (data) setProfiles(data) }catch(e){
+                console.error('Error loading profiles:', e)
+        }
+    }       
     if (!user) { router.push('/login'); return }
     loadHistory(user.id)
+
+    load()
   }, [user, router, loadHistory])
 
   function handleLogout() { localStorage.removeItem('user'); router.push('/login') }
@@ -62,9 +81,16 @@ export default function ProfilePage() {
 
         {/* Profile card */}
         <div className="profile-card" style={{ background: 'var(--surface-card)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-card)', borderRadius: 16, padding: 28, marginBottom: 40, display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' as const }}>
-          <div style={{ width: 80, height: 80, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 800, textTransform: 'uppercase' as const, flexShrink: 0, color: 'white', background: `linear-gradient(135deg,${av},${av}aa)`, boxShadow: `0 8px 32px ${av}40` }}>
-            {user.name[0]}
+          {profiles.map((p) => (
+          <div key={p.id} style={{ width: 80, height: 80, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 800, textTransform: 'uppercase' as const, flexShrink: 0, color: 'white', background: `linear-gradient(135deg,${av},${av}aa)` }}>
+            <Image 
+            src={p.avatars?.image_url}
+            alt={p.name}
+            width={80}
+            height={80}
+            style={{ borderRadius: 8, objectFit: 'cover', transition: 'opacity 0.2s' }}/>
           </div>
+          ))}
           <div style={{ flex: 1, minWidth: 0 }}>
             <h1 className="profile-name" style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>{user.name}</h1>
             <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{user.email}</p>
