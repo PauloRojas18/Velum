@@ -7,7 +7,12 @@ import Image from 'next/image'
 
 interface User { id:number; name:string; email:string; avatar_color:string|null; is_admin:boolean }
 
-interface Profile { id:number; name:string; avatar_color:string|null; avatars?: string[] }
+interface Profile {
+  id: number
+  name: string
+  avatar_color: string | null
+  avatars?: { id: number; image_url: string }[] | null
+}
 
 interface HistoryItem {
   id: number
@@ -84,7 +89,7 @@ export default function ProfilePage() {
           {profiles.map((p) => (
           <div key={p.id} style={{ width: 80, height: 80, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, fontWeight: 800, textTransform: 'uppercase' as const, flexShrink: 0, color: 'white', background: `linear-gradient(135deg,${av},${av}aa)` }}>
             <Image 
-            src={p.avatars?.image_url}
+            src={p.avatars?.[0]?.image_url ?? ''}
             alt={p.name}
             width={80}
             height={80}
