@@ -34,6 +34,7 @@ export default function SelPerfil() {
 
   async function handleSelectProfile(profileId: number) {
     localStorage.setItem('profile_id', String(profileId))
+    window.dispatchEvent(new Event('profile-changed'))
     router.push('/home')
   }
 

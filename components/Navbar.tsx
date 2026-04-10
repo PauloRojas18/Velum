@@ -29,10 +29,13 @@ export default function Navbar() {
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
   const [profile, setProfile] = useState<Profile[]>([])
 
+  // ─── ALTERAÇÃO 1 ─────────────────────────────────────────────────────────────
+  // Separado em useEffect próprio apenas para scroll e tema.
+  // Antes, este hook também lia o localStorage do 'user', o que criava uma
+  // condição de corrida com o outro useEffect que também lia o mesmo dado.
+  // Agora ele só cuida do scroll e do tema, responsabilidade única.
   useEffect(() => {
     try {
-      const s = localStorage.getItem('user')
-      if (s) setUser(JSON.parse(s))
       setTheme((localStorage.getItem('theme') as 'dark' | 'light') ?? 'dark')
     } catch {}
 
@@ -42,6 +45,8 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', h)
   }, [])
 
+  // ─── SEM ALTERAÇÃO ────────────────────────────────────────────────────────────
+  // Observer de tema via atributo data-theme no <html>. Mantido igual.
   useEffect(() => {
     const observer = new MutationObserver(() => {
       const t = document.documentElement.getAttribute('data-theme') as 'dark' | 'light'
@@ -51,17 +56,40 @@ export default function Navbar() {
     return () => observer.disconnect()
   }, [])
 
-  // Troca o useEffect que busca avatars:
+  // ─── ALTERAÇÃO 2 ─────────────────────────────────────────────────────────────
+  // Este é o coração do fix. Antes havia dois useEffect separados:
+  //   • um que lia 'user' do localStorage
+  //   • outro que buscava o avatar no Supabase
+  // Isso causava dois problemas:
+  //   1. Race condition: o segundo podia rodar antes do primeiro terminar
+  //   2. Array de dependências vazio []: ambos só rodavam na montagem do
+  //      componente, nunca ao trocar de perfil na mesma sessão
+  //
+  // Agora tudo está em uma única função `load` que:
+  //   • Lê 'user' e 'profile_id' do localStorage em sequência garantida
+  //   • Busca o avatar correto no Supabase com o profile_id atual
+  //   • Atualiza os estados user e profileAvatar de uma vez só
+  //
+  // Além disso, registramos dois event listeners:
+  //   • 'storage': dispara quando OUTRA aba/janela altera o localStorage
+  //   • 'profile-changed': evento customizado que você dispara manualmente
+  //     na tela de seleção de perfil (ver instrução abaixo), necessário porque
+  //     o evento 'storage' nativo NÃO dispara na própria aba que fez a mudança
+  //
+  // O cleanup remove os listeners ao desmontar o componente, evitando leaks.
   useEffect(() => {
     const load = async () => {
-      const s = localStorage.getItem('user')
-      if (!s) return
-      const parsed = JSON.parse(s)
-      setUser(parsed)
+      try {
+        const s = localStorage.getItem('user')
+        if (s) setUser(JSON.parse(s))
+        else setUser(null)
+      } catch {}
 
-      // Busca só o avatar do perfil selecionado
       const profileId = localStorage.getItem('profile_id')
-      if (!profileId) return
+      if (!profileId) {
+        setProfileAvatar(null)
+        return
+      }
 
       const { data } = await supabase
         .from('profiles')
@@ -70,16 +98,35 @@ export default function Navbar() {
         .single()
 
       const url = (data?.avatars as unknown as { image_url: string } | null)?.image_url
-      if (url) setProfileAvatar(url)
+      setProfileAvatar(url ?? null)
     }
+
     load()
+
+    // Escuta mudanças de localStorage vindas de outras abas
+    window.addEventListener('storage', load)
+
+    // Escuta o evento customizado disparado pela tela de seleção de perfil
+    // Para disparar esse evento, adicione na sua tela de sel_perfil:
+    //
+    //   localStorage.setItem('profile_id', String(profile.id))
+    //   localStorage.setItem('user', JSON.stringify({ ...userData }))
+    //   window.dispatchEvent(new Event('profile-changed'))  // <-- esta linha
+    //   router.push('/home')
+    //
+    window.addEventListener('profile-changed', load)
+
+    return () => {
+      window.removeEventListener('storage', load)
+      window.removeEventListener('profile-changed', load)
+    }
   }, [])
 
-  // Fecha menu ao navegar
+  // Fecha menu ao navegar — sem alteração
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [pathname])
-  
+
   if (pathname === '/login') return null
   if (pathname === '/sel_perfil') return null
   if (pathname === '/sel_perfil/add') return null
@@ -137,7 +184,7 @@ export default function Navbar() {
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
           </Link>
           <Link href="/perfil" style={{ marginLeft: 4, textDecoration: 'none' }}>
-            <div style={{ width: 34, height: 34, borderRadius:4, overflow: 'hidden', cursor: 'pointer' }}>
+            <div style={{ width: 34, height: 34, borderRadius: 4, overflow: 'hidden', cursor: 'pointer' }}>
               {profileAvatar
                 ? <Image src={profileAvatar} width={34} height={34} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
                 : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', background: `linear-gradient(135deg,${av},${av}cc)`, color: 'white' }}>
@@ -149,15 +196,15 @@ export default function Navbar() {
         </div>
 
         {/* Mobile hamburger button */}
-        <button 
+        <button
           className="nav-mobile-hamburger"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          style={{ 
-            display: 'none', 
-            width: 40, height: 40, 
-            borderRadius: 8, 
-            background: 'transparent', 
-            border: 'none', 
+          style={{
+            display: 'none',
+            width: 40, height: 40,
+            borderRadius: 8,
+            background: 'transparent',
+            border: 'none',
             cursor: 'pointer',
             alignItems: 'center',
             justifyContent: 'center',
@@ -178,14 +225,11 @@ export default function Navbar() {
 
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
-        <div 
+        <div
           className="nav-mobile-overlay"
           style={{
             position: 'fixed',
-            top: 64,
-            left: 0,
-            right: 0,
-            bottom: 0,
+            top: 64, left: 0, right: 0, bottom: 0,
             background: 'var(--bg)',
             zIndex: 99,
             padding: '24px 16px',
@@ -198,73 +242,56 @@ export default function Navbar() {
             const active = pathname === href
             return (
               <Link key={href} href={href} style={{
-                padding: '14px 16px',
-                borderRadius: 12,
-                fontSize: 16,
-                fontWeight: active ? 600 : 500,
+                padding: '14px 16px', borderRadius: 12,
+                fontSize: 16, fontWeight: active ? 600 : 500,
                 color: active ? 'var(--text-primary)' : 'var(--text-muted)',
                 background: active ? 'var(--nav-link-active-bg)' : 'var(--surface)',
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
+                textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12,
               }}>
                 {label}
               </Link>
             )
           })}
-          
+
           <div style={{ height: 1, background: 'var(--surface-border)', margin: '8px 0' }} />
-          
+
           {user?.is_admin && (
             <Link href="/admin" style={{
-              padding: '14px 16px',
-              borderRadius: 12,
-              fontSize: 16,
-              fontWeight: 500,
-              color: '#a78bfa',
-              background: 'rgba(139,92,246,0.12)',
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
+              padding: '14px 16px', borderRadius: 12,
+              fontSize: 16, fontWeight: 500,
+              color: '#a78bfa', background: 'rgba(139,92,246,0.12)',
+              textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12,
             }}>
               Admin
             </Link>
           )}
-          
+
           <Link href="/configuracoes" style={{
-            padding: '14px 16px',
-            borderRadius: 12,
-            fontSize: 16,
-            fontWeight: 500,
-            color: 'var(--text-muted)',
-            background: 'var(--surface)',
-            textDecoration: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
+            padding: '14px 16px', borderRadius: 12,
+            fontSize: 16, fontWeight: 500,
+            color: 'var(--text-muted)', background: 'var(--surface)',
+            textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12,
           }}>
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
             Configurações
           </Link>
-          
-        <Link href="/perfil" style={{ padding: '14px 16px', borderRadius: 12, fontSize: 16, fontWeight: 500, color: 'var(--text-muted)', background: 'var(--surface)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }}>
-            {profileAvatar
-              ? <Image src={profileAvatar} width={28} height={28} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
-              : <div style={{
-                  width: '100%', height: '100%',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 13, fontWeight: 700, textTransform: 'uppercase',
-                  background: `linear-gradient(135deg,${av},${av}cc)`, color: 'white'
-                }}>
-                  {user?.name?.[0] ?? 'U'}
-                </div>
-            }
-          </div>
-          Meu Perfil
-        </Link>
+
+          <Link href="/perfil" style={{ padding: '14px 16px', borderRadius: 12, fontSize: 16, fontWeight: 500, color: 'var(--text-muted)', background: 'var(--surface)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }}>
+              {profileAvatar
+                ? <Image src={profileAvatar} width={28} height={28} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
+                : <div style={{
+                    width: '100%', height: '100%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700, textTransform: 'uppercase',
+                    background: `linear-gradient(135deg,${av},${av}cc)`, color: 'white'
+                  }}>
+                    {user?.name?.[0] ?? 'U'}
+                  </div>
+              }
+            </div>
+            Meu Perfil
+          </Link>
         </div>
       )}
 
