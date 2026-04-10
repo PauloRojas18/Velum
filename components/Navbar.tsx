@@ -7,6 +7,12 @@ import { supabase } from '@/lib/supabase'
 import Image from 'next/image'
 
 interface User { name: string; email: string; avatar_color: string | null; is_admin: boolean }
+interface Profile {
+  id: number
+  name: string
+  avatar_color: string | null
+  avatars?: { id: number; image_url: string } | null
+}
 
 const NAV_LINKS = [
   { href: '/home', label: 'Início' },
@@ -21,6 +27,7 @@ export default function Navbar() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
+  const [profile, setProfile] = useState<Profile[]>([])
 
   useEffect(() => {
     try {
@@ -58,7 +65,7 @@ export default function Navbar() {
 
       const { data } = await supabase
         .from('profiles')
-        .select('avatars(image_url)')
+        .select('avatars(id,image_url)')
         .eq('id', Number(profileId))
         .single()
 
@@ -242,17 +249,22 @@ export default function Navbar() {
             Configurações
           </Link>
           
-          <Link href="/perfil" style={{ padding: '14px 16px', borderRadius: 12, fontSize: 16, fontWeight: 500, color: 'var(--text-muted)', background: 'var(--surface)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 28, height: 28, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }}>
-              {profileAvatar
-                ? <Image src={profileAvatar} width={28} height={28} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
-                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', background: `linear-gradient(135deg,${av},${av}cc)`, color: 'white' }}>
-                    {user?.name?.[0] ?? 'U'}
-                  </div>
-              }
-            </div>
-            Meu Perfil
-          </Link>
+        <Link href="/perfil" style={{ padding: '14px 16px', borderRadius: 12, fontSize: 16, fontWeight: 500, color: 'var(--text-muted)', background: 'var(--surface)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 4, overflow: 'hidden', flexShrink: 0 }}>
+            {profileAvatar
+              ? <Image src={profileAvatar} width={28} height={28} alt="avatar" style={{ objectFit: 'cover', display: 'block' }} />
+              : <div style={{
+                  width: '100%', height: '100%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, fontWeight: 700, textTransform: 'uppercase',
+                  background: `linear-gradient(135deg,${av},${av}cc)`, color: 'white'
+                }}>
+                  {user?.name?.[0] ?? 'U'}
+                </div>
+            }
+          </div>
+          Meu Perfil
+        </Link>
         </div>
       )}
 
